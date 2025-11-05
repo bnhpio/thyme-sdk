@@ -22,6 +22,7 @@
   },
   "private": true,
   "dependencies": {
-    "yargs": "^18.0.0"
+    "yargs": "^18.0.0",
+    "@bnhpio/thyme-sdk": "link:@bnhpio/thyme-sdk"
   }
 }

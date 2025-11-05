@@ -1,2 +1,2 @@
 #! /usr/bin/env bun
-import './commands/note';
+import './commands/square';

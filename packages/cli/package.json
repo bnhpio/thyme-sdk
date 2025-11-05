@@ -1,0 +1,27 @@
+{
+  "name": "@bnhpio/thyme-cli",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "thyme": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "rslib build",
+    "check": "biome check --write",
+    "dev": "rslib build --watch",
+    "format": "biome format --write",
+    "test": "rstest"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.2",
+    "@rslib/core": "^0.17.1",
+    "@rstest/core": "^0.6.1",
+    "@types/node": "^24.10.0",
+    "@types/yargs": "^17.0.34",
+    "typescript": "^5.9.3"
+  },
+  "private": true,
+  "dependencies": {
+    "yargs": "^18.0.0"
+  }
+}

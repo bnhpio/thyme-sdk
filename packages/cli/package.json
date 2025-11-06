@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "bin": {
-    "thyme": "./src/index.ts"
+    "thyme": "./dist/index.js"
   },
   "scripts": {
     "build": "rslib build",

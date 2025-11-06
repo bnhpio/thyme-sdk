@@ -18,6 +18,10 @@
     "./task/schema": {
       "types": "./dist/task/schema/index.d.ts",
       "import": "./dist/task/schema.js"
+    },
+    "./account/alchemy": {
+      "types": "./dist/account/alchemy/index.d.ts",
+      "import": "./dist/account/alchemy.js"
     }
   },
   "types": "./dist/index.d.ts",

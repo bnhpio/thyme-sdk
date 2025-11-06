@@ -60,11 +60,19 @@ export interface RunTaskArgs<T> {
     skipSuccessCallback?: boolean;
     skipFailCallback?: boolean;
     skipSimulation?: boolean;
+    alchemyOptions?: AlchemyOptions;
   };
   context: {
     userArgs: T;
     secrets?: Secrets;
   };
+}
+
+export interface AlchemyOptions {
+  apiKey: string;
+  salt: Hex;
+  policyId: string;
+  baseUrl: string;
 }
 
 export function onRun<T>(callback: RunCallback<T>): RunCallback<T> {

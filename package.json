@@ -21,6 +21,10 @@
     "packages/*"
   ],
   "dependencies": {
+    "@aa-sdk/core": "^4.78.0",
+    "@account-kit/infra": "^4.78.0",
+    "@account-kit/smart-contracts": "^4.78.0",
+    "@account-kit/wallet-client": "^4.78.0",
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0"
   }

@@ -7,6 +7,7 @@ export default defineConfig({
       'task/archive': './src/task/archive/index.ts',
       'task/transaction': './src/task/transaction/index.ts',
       'task/schema': './src/task/schema/index.ts',
+      'account/alchemy': './src/account/index.ts',
     },
   },
   lib: [

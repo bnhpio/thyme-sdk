@@ -6,7 +6,7 @@ import {
 } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import Simple7702AccountABI from '../../../abis/Simple7702Account';
-import type { SendCallsOptions } from './types';
+import type { SendCallsOptions } from '../types';
 import { getChain } from './utils';
 
 // TODO: make this configurable
@@ -39,21 +39,24 @@ export async function sendCalls(
     executor: 'self',
     account: account,
   });
-
-  const result = await walletClient.writeContract({
-    authorizationList: [authorization],
-    address: account.address,
-    abi: Simple7702AccountABI,
-    chain: chain,
-    functionName: 'executeBatch',
-    args: [
-      args.calls.map((call) => ({
-        target: call.to,
-        value: 0n,
-        data: call.data as Hex,
-      })),
-    ],
-  });
-
-  return result;
+  try {
+    const result = await walletClient.writeContract({
+      authorizationList: [authorization],
+      address: account.address,
+      abi: Simple7702AccountABI,
+      chain: chain,
+      functionName: 'executeBatch',
+      args: [
+        args.calls.map((call) => ({
+          target: call.to,
+          value: 0n,
+          data: call.data as Hex,
+        })),
+      ],
+    });
+    return result;
+  } catch (error) {
+    console.error('Error sending calls:', error);
+    throw error;
+  }
 }

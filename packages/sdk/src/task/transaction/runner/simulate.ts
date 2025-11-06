@@ -12,7 +12,8 @@ import type { Context, SimulateTaskArgs } from './types';
  * @param args.context - The context for the simulation
  * @param args.context.userArgs - The user arguments for the simulation
  * @param args.context.secrets - The secrets for the simulation
- * @returns
+ * @returns The simulation result, or undefined if the task cannot be executed (canExec === false)
+ * @remarks If you need to throw errors on failure instead of returning undefined, use {@link validateSimulation}
  */
 export async function simulateTask<T>(
   args: SimulateTaskArgs<T>,
@@ -25,7 +26,7 @@ export async function simulateTask<T>(
   const result = await args.runner.run(context);
 
   if (result.canExec === false) {
-    console.log(`Can't execute: ${result.message}`);
+    console.log(`Can't simulate: ${result.message}`);
     return undefined;
   }
 
@@ -37,3 +38,5 @@ export async function simulateTask<T>(
     },
   });
 }
+
+export * from './validateSimulation';

@@ -1,11 +1,9 @@
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { validateSchema } from '@bnhpio/thyme-sdk/task/schema';
-import { simulateTask } from '@bnhpio/thyme-sdk/task/transaction';
+import { loadAndValidateSchema } from '@bnhpio/thyme-sdk/task/schema';
+import { validateSimulation } from '@bnhpio/thyme-sdk/task/transaction';
 import dotenv from 'dotenv';
+import path from 'path';
 import { type Address, createPublicClient, formatEther, http } from 'viem';
 import type { CommandModule } from 'yargs';
-import z from 'zod';
 import { parseToml } from '../utils/parseToml';
 
 export const oldSimulateCommand: CommandModule = {
@@ -69,22 +67,23 @@ async function simulate(
     options.args,
   );
 
-  const schemaModule: { schema: z.ZodSchema } = await import(schemaPath);
-  const jsonSchema = z.toJSONSchema(schemaModule.schema, {
-    target: 'openapi-3.0',
-  });
-  const schemaContent = JSON.stringify(jsonSchema, null, 2);
-  // validate schema
-  const argsJSON = await readFile(argsPath, 'utf-8');
-
-  const isValid = await validateSchema(schemaContent, argsJSON);
-  if (!isValid) {
-    console.error('Invalid schema');
+  // Load and validate schema
+  let validatedArgs: unknown;
+  try {
+    const validationResult = await loadAndValidateSchema({
+      schemaPath,
+      argsPath,
+    });
+    validatedArgs = validationResult.args;
+  } catch (error) {
+    console.error(
+      'Schema validation failed:',
+      error instanceof Error ? error.message : String(error),
+    );
     process.exit(1);
   }
 
   const source = await import(sourcePath);
-  const parsedArgs = JSON.parse(argsJSON);
 
   const toml = await parseToml(
     path.join(process.cwd(), 'untl.toml'),
@@ -92,33 +91,25 @@ async function simulate(
     options.profile,
   );
 
-  const simulateResult = await simulateTask({
-    runner: source.default,
-    options: {
-      account: toml.publicKey as Address,
-      rpcUrl: toml.rpcUrl,
-    },
-    context: {
-      userArgs: parsedArgs,
-      secrets: undefined,
-    },
-  });
-
-  if (!simulateResult) {
-    console.error('Error simulating transaction:');
+  // Simulate and validate results
+  try {
+    await validateSimulation({
+      runner: source.default,
+      options: {
+        account: toml.publicKey as Address,
+        rpcUrl: toml.rpcUrl,
+      },
+      context: {
+        userArgs: validatedArgs,
+        secrets: undefined,
+      },
+    });
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error));
     process.exit(1);
   }
 
-  const isFailed = simulateResult.results.some(
-    (result) => result.status === 'failure',
-  );
-  if (isFailed) {
-    console.error('Transaction failed:');
-    console.error(
-      simulateResult.results.map((result) => result.error).join('\n'),
-    );
-    process.exit(1);
-  }
+  // Display chain info
   const publicClient = createPublicClient({
     transport: http(toml.rpcUrl),
   });

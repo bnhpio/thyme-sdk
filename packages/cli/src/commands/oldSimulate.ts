@@ -1,8 +1,8 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { validateSchema } from '@bnhpio/thyme-sdk/task/schema';
 import { simulateTask } from '@bnhpio/thyme-sdk/task/transaction';
 import dotenv from 'dotenv';
-import { readFile } from 'fs/promises';
-import path from 'path';
 import { type Address, createPublicClient, formatEther, http } from 'viem';
 import type { CommandModule } from 'yargs';
 import z from 'zod';

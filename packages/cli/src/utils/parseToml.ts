@@ -1,5 +1,5 @@
+import { readFile } from 'node:fs/promises';
 import * as TOML from '@iarna/toml';
-import { readFile } from 'fs/promises';
 
 export async function parseToml(
   tomlPath: string,
@@ -15,7 +15,10 @@ export async function parseToml(
       'No profiles found in untl.toml. Please define at least one profile.',
     );
   }
-  const profiles = result.profiles as Record<string, any>;
+  const profiles = result.profiles as Record<
+    string,
+    { rpcUrl: string; privateKey: string; publicKey: string }
+  >;
 
   if (!(profile in profiles)) {
     throw new Error(

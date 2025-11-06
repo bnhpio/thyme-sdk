@@ -1,20 +1,20 @@
 #! /usr/bin/env bun
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
-import { createCommand } from './commands/create.js';
-import { deployCommand } from './commands/deploy.js';
-import { oldSimulateCommand } from './commands/oldSimulate.js';
-import { registerCommand } from './commands/register.js';
-import { runCommand } from './commands/run.js';
-import { simulateCommand } from './commands/simulate.js';
-import { validateCommand } from './commands/validate.js';
+import { createCommand } from './commands/create';
+import { oldSimulateCommand } from './commands/oldSimulate';
+import { registerCommand } from './commands/register';
+import { runCommand } from './commands/run';
+import { simulateCommand } from './commands/simulate';
+import { uploadCommand } from './commands/upload';
+import { validateCommand } from './commands/validate';
 
 yargs(hideBin(process.argv))
   .scriptName('thyme')
   .command(createCommand)
   .command(registerCommand)
   .command(runCommand)
-  .command(deployCommand)
+  .command(uploadCommand)
   .command(validateCommand)
   .command(simulateCommand)
   .command(oldSimulateCommand)

@@ -93,7 +93,7 @@ async function simulate(
   );
 
   const simulateResult = await simulateTask({
-    runner: source,
+    runner: source.default,
     options: {
       account: toml.publicKey as Address,
       rpcUrl: toml.rpcUrl,

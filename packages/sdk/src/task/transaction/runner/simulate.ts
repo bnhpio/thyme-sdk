@@ -25,6 +25,7 @@ export async function simulateTask<T>(
   const result = await args.runner.run(context);
 
   if (result.canExec === false) {
+    console.log(`Can't execute: ${result.message}`);
     return undefined;
   }
 

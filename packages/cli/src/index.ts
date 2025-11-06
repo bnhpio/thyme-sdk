@@ -1,2 +1,2 @@
 #! /usr/bin/env bun
-import './commands/square';
+console.log('Hello, world!');

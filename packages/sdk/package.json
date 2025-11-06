@@ -7,6 +7,21 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./task/archive": {
+      "types": "./dist/task/archive/index.d.ts",
+      "import": "./dist/task/archive/index.js",
+      "require": "./dist/task/archive/index.cjs"
+    },
+    "./task/transaction": {
+      "types": "./dist/task/transaction/index.d.ts",
+      "import": "./dist/task/transaction/index.js",
+      "require": "./dist/task/transaction/index.cjs"
+    },
+    "./task/schema": {
+      "types": "./dist/task/schema/index.d.ts",
+      "import": "./dist/task/schema/index.js",
+      "require": "./dist/task/schema/index.cjs"
     }
   },
   "main": "./dist/index.cjs",
@@ -28,5 +43,10 @@
     "@types/node": "^24.10.0",
     "typescript": "^5.9.3"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "viem": "^2.38.6",
+    "zlib": "^1.0.5"
+  }
 }

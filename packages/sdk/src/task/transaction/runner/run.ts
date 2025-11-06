@@ -1,4 +1,4 @@
-import { createPublicClient, Hex, http } from 'viem';
+import { createPublicClient, type Hex, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { waitForTransactionReceipt } from 'viem/actions';
 import { sendAlchemyCalls } from '../alchemy/send';

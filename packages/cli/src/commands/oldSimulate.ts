@@ -1,7 +1,7 @@
+import path from 'node:path';
 import { loadAndValidateSchema } from '@bnhpio/thyme-sdk/task/schema';
 import { validateSimulation } from '@bnhpio/thyme-sdk/task/transaction';
 import dotenv from 'dotenv';
-import path from 'path';
 import { type Address, createPublicClient, formatEther, http } from 'viem';
 import type { CommandModule } from 'yargs';
 import { parseToml } from '../utils/parseToml';

@@ -1,7 +1,7 @@
+import path from 'node:path';
 import { loadAndValidateSchema } from '@bnhpio/thyme-sdk/task/schema';
 import { runTask } from '@bnhpio/thyme-sdk/task/transaction';
 import dotenv from 'dotenv';
-import path from 'path';
 import type { Hex } from 'viem';
 import type { CommandModule } from 'yargs';
 import { parseToml } from '../utils/parseToml';

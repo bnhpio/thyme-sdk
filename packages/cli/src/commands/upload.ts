@@ -21,11 +21,13 @@ export const uploadCommand: CommandModule = {
       .option('authToken', {
         description: 'Authentication token',
         type: 'string',
+        alias: 'a',
         demandOption: true,
       })
       .option('organizationId', {
         description: 'Organization ID',
         type: 'string',
+        alias: 'o',
         demandOption: true,
       }),
   handler: async (argv) => {
@@ -151,7 +153,10 @@ export const uploadCommand: CommandModule = {
         });
 
         if (!response.ok) {
-          throw new Error(`Failed to deploy function: ${response.statusText}`);
+          console.error(await response.text());
+          throw new Error(
+            `Failed to deploy function: ${await response.text()}`,
+          );
         }
 
         const responseData = (await response.json()) as { hash: string };

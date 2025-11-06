@@ -5,26 +5,21 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.js"
     },
     "./task/archive": {
       "types": "./dist/task/archive/index.d.ts",
-      "import": "./dist/task/archive/index.js",
-      "require": "./dist/task/archive/index.cjs"
+      "import": "./dist/task/archive.js"
     },
     "./task/transaction": {
       "types": "./dist/task/transaction/index.d.ts",
-      "import": "./dist/task/transaction/index.js",
-      "require": "./dist/task/transaction/index.cjs"
+      "import": "./dist/task/transaction.js"
     },
     "./task/schema": {
       "types": "./dist/task/schema/index.d.ts",
-      "import": "./dist/task/schema/index.js",
-      "require": "./dist/task/schema/index.cjs"
+      "import": "./dist/task/schema.js"
     }
   },
-  "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"

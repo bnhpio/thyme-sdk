@@ -20,6 +20,7 @@ export async function sendAlchemyCalls(
       to: call.to,
       data: call.data,
     })),
+
     from: account,
     capabilities: {
       paymasterService: {
@@ -30,8 +31,15 @@ export async function sendAlchemyCalls(
   try {
     const signedCalls = await client.signPreparedCalls(preparedCalls);
     const result = await client.sendPreparedCalls(signedCalls);
-    // @ts-expect-error todo missing types
-    return result.details.hashes || [];
+    const callsStatus = await client.waitForCallsStatus({
+      id: result.preparedCallIds[0],
+    });
+    const tsx =
+      callsStatus.receipts?.map((receipt) => receipt.transactionHash) || [];
+    if (callsStatus.status !== 'success') {
+      throw new Error('Failed to send alchemy calls', { cause: callsStatus });
+    }
+    return tsx;
   } catch (error) {
     console.error('Error sending alchemy calls:', error);
     throw error;

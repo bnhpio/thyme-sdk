@@ -1,12 +1,11 @@
-import { createPublicClient, type Hex, http } from 'viem';
+import type { Hex } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { waitForTransactionReceipt } from 'viem/actions';
 import { sendAlchemyCalls } from '../alchemy/send';
 import { sendCalls } from '../onchain/send';
 import type { Context, RunTaskArgs } from './types';
 import { validateSimulation } from './validateSimulation';
 
-export async function runTask<T>(args: RunTaskArgs<T>): Promise<void> {
+export async function runTask<T>(args: RunTaskArgs<T>): Promise<Hex[]> {
   const context: Context<T> = {
     userArgs: args.context.userArgs,
     secrets: args.context.secrets || {},
@@ -16,7 +15,7 @@ export async function runTask<T>(args: RunTaskArgs<T>): Promise<void> {
 
   if (result.canExec === false) {
     console.log('Skipping task because it cannot be executed:', result.message);
-    return;
+    throw new Error('Task cannot be executed');
   }
 
   if (!args.options.skipSimulation) {
@@ -31,49 +30,46 @@ export async function runTask<T>(args: RunTaskArgs<T>): Promise<void> {
       });
     } catch (error) {
       console.error(error instanceof Error ? error.message : String(error));
-      return;
+      throw new Error('Simulation failed');
     }
   }
   let txs: Hex[] = [];
   if (args.options.alchemyOptions) {
-    console.log('sending alchemy calls');
-    txs = await sendAlchemyCalls({
-      calls: result.calls,
-      options: {
-        privateKey: args.options.privateKey,
-        rpcUrl: args.options.rpcUrl,
-        alchemyOptions: args.options.alchemyOptions,
-      },
-    });
-    console.log(txs);
-  } else {
-    console.log('sending onchain calls');
-    txs = [
-      await sendCalls({
+    try {
+      txs = await sendAlchemyCalls({
         calls: result.calls,
         options: {
           privateKey: args.options.privateKey,
           rpcUrl: args.options.rpcUrl,
+          alchemyOptions: args.options.alchemyOptions,
         },
-      }),
-    ];
-  }
-
-  const client = createPublicClient({
-    transport: http(args.options.rpcUrl),
-  });
-
-  const receipt = await waitForTransactionReceipt(client, {
-    hash: txs[0],
-  });
-
-  if (receipt.status === 'success') {
-    if (!args.options.skipSuccessCallback) {
-      args.runner.success(txs[0]);
+      });
+      args.runner.success(txs);
+      return txs;
+    } catch (error: unknown) {
+      // @ts-expect-error - error.cause is not typed
+      console.error(error.cause);
+      // @ts-expect-error - error.cause is not typed
+      args.runner.fail(txs, error.cause);
+      return [];
     }
   } else {
-    if (!args.options.skipFailCallback) {
-      args.runner.fail(txs[0]);
+    try {
+      txs = [
+        await sendCalls({
+          calls: result.calls,
+          options: {
+            privateKey: args.options.privateKey,
+            rpcUrl: args.options.rpcUrl,
+          },
+        }),
+      ];
+      args.runner.success(txs);
+      return txs;
+    } catch (e) {
+      console.error(e);
+      args.runner.fail(txs, e as Error);
+      return [];
     }
   }
 }

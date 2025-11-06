@@ -1,4 +1,4 @@
-import type { Address, Hash, Hex, WriteContractReturnType } from 'viem';
+import type { Address, Hex } from 'viem';
 
 export interface Context<T> {
   userArgs: T;
@@ -28,10 +28,8 @@ export type RunCallback<T> = (
   context: Context<T>,
   secrets?: Secrets,
 ) => Promise<Result>;
-export type FailCallback = (hash: Hash, error?: Error) => Promise<void>;
-export type SuccessCallback = (
-  result: WriteContractReturnType,
-) => Promise<void>;
+export type FailCallback = (result: Hex[], error?: Error) => Promise<void>;
+export type SuccessCallback = (result: Hex[]) => Promise<void>;
 
 export interface Runner<T> {
   run: RunCallback<T>;

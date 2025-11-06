@@ -30,7 +30,6 @@ export const createAlchemyClient = async (
     signer,
   });
 
-  console.log('requesting account', options.salt);
   const account = await client.requestAccount({
     id: options.salt,
     creationHint: {

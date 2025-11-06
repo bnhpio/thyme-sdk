@@ -22,7 +22,10 @@
   },
   "private": true,
   "dependencies": {
+    "@bnhpio/thyme-sdk": "link:@bnhpio/thyme-sdk",
+    "@iarna/toml": "^2.2.5",
+    "dotenv": "^17.2.3",
     "yargs": "^18.0.0",
-    "@bnhpio/thyme-sdk": "link:@bnhpio/thyme-sdk"
+    "zod": "^4.1.12"
   }
 }

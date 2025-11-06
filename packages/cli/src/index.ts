@@ -3,6 +3,7 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { createCommand } from './commands/create.js';
 import { deployCommand } from './commands/deploy.js';
+import { oldSimulateCommand } from './commands/oldSimulate.js';
 import { registerCommand } from './commands/register.js';
 import { runCommand } from './commands/run.js';
 import { simulateCommand } from './commands/simulate.js';
@@ -16,6 +17,7 @@ yargs(hideBin(process.argv))
   .command(deployCommand)
   .command(validateCommand)
   .command(simulateCommand)
+  .command(oldSimulateCommand)
   .demandCommand(1, 'You need at least one command before moving on')
   .help()
   .parse();

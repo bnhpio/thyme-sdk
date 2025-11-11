@@ -23,7 +23,7 @@ export async function simulateTask<T>(
     secrets: args.context.secrets || {},
   };
 
-  const result = await args.runner.run(context);
+  const result = await args.runner.run(context, args.utils);
 
   if (result.canExec === false) {
     console.log(`Can't simulate: ${result.message}`);

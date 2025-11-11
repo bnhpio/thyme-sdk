@@ -11,7 +11,7 @@ export async function runTask<T>(args: RunTaskArgs<T>): Promise<Hex[]> {
     secrets: args.context.secrets || {},
   };
 
-  const result = await args.runner.run(context);
+  const result = await args.runner.run(context, args.utils);
 
   if (result.canExec === false) {
     console.log('Skipping task because it cannot be executed:', result.message);
@@ -27,6 +27,7 @@ export async function runTask<T>(args: RunTaskArgs<T>): Promise<Hex[]> {
           rpcUrl: args.options.rpcUrl,
         },
         context: args.context,
+        utils: args.utils,
       });
     } catch (error) {
       console.error(error instanceof Error ? error.message : String(error));

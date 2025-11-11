@@ -1,6 +1,6 @@
 {
   "name": "@bnhpio/thyme-sdk",
-  "version": "1.0.0",
+  "version": "0.0.3",
   "type": "module",
   "exports": {
     ".": {
@@ -40,12 +40,13 @@
     "@rslib/core": "^0.17.1",
     "@rstest/core": "^0.6.1",
     "@types/node": "^24.10.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "@types/bun": "latest"
   },
-  "private": true,
   "dependencies": {
     "ajv": "^8.17.1",
     "viem": "^2.38.6",
     "zlib": "^1.0.5"
-  }
+  },
+  "module": "src/index.ts"
 }

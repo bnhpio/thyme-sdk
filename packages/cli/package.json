@@ -22,7 +22,7 @@
   },
   "private": true,
   "dependencies": {
-    "@bnhpio/thyme-sdk": "link:@bnhpio/thyme-sdk",
+    "@bnhpio/thyme-sdk": "^0.0.3",
     "@iarna/toml": "^2.2.5",
     "dotenv": "^17.2.3",
     "esbuild": "^0.24.0",

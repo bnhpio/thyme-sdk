@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: any is used to allow for any type of argument */
 import type { Address, Hex } from 'viem';
 
 export interface Context<T> {
@@ -26,7 +27,7 @@ export type Call = {
 
 export type RunCallback<T> = (
   context: Context<T>,
-  secrets?: Secrets,
+  utils: Utils,
 ) => Promise<Result>;
 export type FailCallback = (result: Hex[], error?: Error) => Promise<void>;
 export type SuccessCallback = (result: Hex[]) => Promise<void>;
@@ -49,6 +50,7 @@ export interface SimulateTaskArgs<T> {
     userArgs: T;
     secrets?: Secrets;
   };
+  utils: Utils;
 }
 export interface RunTaskArgs<T> {
   runner: Runner<T>;
@@ -64,6 +66,13 @@ export interface RunTaskArgs<T> {
     userArgs: T;
     secrets?: Secrets;
   };
+  utils: Utils;
+}
+
+export interface Utils {
+  log: (...args: any[]) => Promise<void>;
+  warn: (...args: any[]) => Promise<void>;
+  error: (...args: any[]) => Promise<void>;
 }
 
 export interface AlchemyOptions {
@@ -74,9 +83,8 @@ export interface AlchemyOptions {
 }
 
 export function onRun<T>(callback: RunCallback<T>): RunCallback<T> {
-  return async (context: Context<T>, secrets?: Secrets) => {
-    context.secrets = secrets || {};
-    return callback(context);
+  return async (context: Context<T>, utils: Utils) => {
+    return callback(context, utils);
   };
 }
 

@@ -3,6 +3,7 @@ import { constants } from 'node:fs';
 import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { compressFiles } from '@bnhpio/thyme-sdk/archive';
+import dotenv from 'dotenv';
 import * as esbuild from 'esbuild';
 import z from 'zod';
 import type {
@@ -13,7 +14,33 @@ import type {
   UploadOptions,
 } from './types';
 
-const DEPLOY_URL: string = process.env.DEPLOY_URL || '';
+/**
+ * Parses environment variables from a .env file
+ *
+ * @param envFile - Path to the environment file (relative to project root or absolute)
+ * @returns Object containing parsed environment variables
+ * @throws Error if env file exists but cannot be parsed
+ */
+function parseEnvFile(envFile: string): Record<string, string> {
+  const envPath = path.isAbsolute(envFile)
+    ? envFile
+    : path.join(process.cwd(), envFile);
+
+  const result = dotenv.config({ path: envPath });
+
+  // Return empty object if no env file found (not an error, env vars may come from system)
+  // Check if error exists and is not a "file not found" type error
+  if (result.error) {
+    const errorCode = (result.error as { code?: string }).code;
+    if (errorCode && errorCode !== 'ENOENT') {
+      throw new Error(
+        `Failed to load environment file ${envPath}: ${result.error.message}`,
+      );
+    }
+  }
+
+  return (result.parsed as Record<string, string>) || {};
+}
 
 /**
  * Main upload function that orchestrates the upload of a function
@@ -27,7 +54,7 @@ const DEPLOY_URL: string = process.env.DEPLOY_URL || '';
  * 6. Deploys to the server
  *
  * @param functionName - Name of the function to upload
- * @param options - Upload options including auth token and organization ID
+ * @param options - Upload options including auth token, organization ID, and env file
  * @throws Error if validation fails or upload encounters an error
  */
 export async function upload(
@@ -41,10 +68,30 @@ export async function upload(
     );
   }
 
+  // Load environment variables from .env file
+  const envFile = options.envFile || '.env';
+  const envVars = parseEnvFile(envFile);
+
+  // Get DEPLOY_URL from .env file
+  const deployUrl = envVars.DEPLOY_URL || process.env.DEPLOY_URL;
+
   // Validate deploy URL
-  if (!DEPLOY_URL) {
+  if (!deployUrl) {
     throw new Error(
-      'DEPLOY_URL environment variable is not set. Please set it before uploading.',
+      `DEPLOY_URL is not set in ${envFile} or environment variables. Please set it before uploading.`,
+    );
+  }
+
+  // Get auth token from .env file or use provided token
+  const authToken =
+    envVars.THYME_AUTH_TOKEN ||
+    process.env.THYME_AUTH_TOKEN ||
+    options.authToken;
+
+  // Validate auth token
+  if (!authToken) {
+    throw new Error(
+      `Authentication token is not set. Please run "thyme auth <token>" or provide --authToken option.`,
     );
   }
 
@@ -53,7 +100,7 @@ export async function upload(
   await validateUploadPaths(paths);
 
   // Display initial information
-  displayUploadInfo(functionName, paths);
+  displayUploadInfo(functionName, paths, deployUrl);
 
   // Build artifacts (source, compiled JS, schema)
   const artifacts = await buildArtifacts(paths);
@@ -65,7 +112,11 @@ export async function upload(
   displayCompressionInfo(compressionResult);
 
   // Deploy to server
-  const deploymentResponse = await deployToServer(compressionResult, options);
+  const deploymentResponse = await deployToServer(
+    compressionResult,
+    { ...options, authToken },
+    deployUrl,
+  );
 
   console.log(`✅ Function deployed successfully: ${deploymentResponse.hash}`);
 }
@@ -152,15 +203,17 @@ async function validateUploadPaths(paths: UploadFunctionPaths): Promise<void> {
  *
  * @param functionName - Name of the function being uploaded
  * @param paths - File paths being used
+ * @param deployUrl - Deployment URL
  */
 function displayUploadInfo(
   functionName: string,
   paths: UploadFunctionPaths,
+  deployUrl: string,
 ): void {
   console.log(`🚀 Deploying function: ${functionName}`);
   console.log(`📁 Source: ${paths.sourcePath}`);
   console.log(`📋 Schema: ${paths.schemaPath}`);
-  console.log(`🌐 Deploy URL: ${DEPLOY_URL}`);
+  console.log(`🌐 Deploy URL: ${deployUrl}`);
 }
 
 /**
@@ -333,12 +386,14 @@ function displayCompressionInfo(result: CompressionResult): void {
  *
  * @param compressionResult - Compression result containing data and checksum
  * @param options - Upload options including auth token and organization ID
+ * @param deployUrl - Deployment URL from .env file
  * @returns Deployment response with hash
  * @throws Error if deployment fails
  */
 async function deployToServer(
   compressionResult: CompressionResult,
   options: UploadOptions,
+  deployUrl: string,
 ): Promise<DeploymentResponse> {
   console.log('🚀 Deploying to server...');
 
@@ -357,7 +412,7 @@ async function deployToServer(
       'compressed.gz',
     );
 
-    const response = await fetch(DEPLOY_URL, {
+    const response = await fetch(`${deployUrl}/http/api/task/upload`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${options.authToken}`,

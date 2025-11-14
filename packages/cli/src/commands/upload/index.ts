@@ -13,22 +13,30 @@ export const uploadCommand: CommandModule = {
         demandOption: true,
       })
       .option('authToken', {
-        description: 'Authentication token',
+        description:
+          'Authentication token (optional if set via "thyme auth <token>")',
         type: 'string',
         alias: 'a',
-        demandOption: true,
+        demandOption: false,
       })
       .option('organizationId', {
         description: 'Organization ID',
         type: 'string',
         alias: 'o',
         demandOption: true,
+      })
+      .option('env', {
+        description:
+          'Environment file to use for the upload in root of the project (default: .env)',
+        type: 'string',
+        default: '.env',
       }),
   handler: async (argv) => {
     const functionName = argv.function as string;
     const options: UploadOptions = {
       authToken: argv.authToken as string,
       organizationId: argv.organizationId as string,
+      envFile: (argv.env as string) || '.env',
     };
 
     try {

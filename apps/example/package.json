@@ -3,6 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
+  "scripts": {},
   "devDependencies": {
     "@types/bun": "latest"
   },
@@ -12,7 +13,7 @@
   "dependencies": {
     "viem": "^2.38.0",
     "zod": "^4.1.12",
-    "@bnhpio/thyme-sdk": "workspace:*",
+    "@bnhpio/thyme-sdk": "0.0.4",
     "@bnhpio/thyme-cli": "workspace:*"
   }
 }

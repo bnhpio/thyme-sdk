@@ -1,6 +1,6 @@
 {
   "name": "@bnhpio/thyme-cli",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "bin": {
     "thyme": "./dist/index.js"
@@ -27,6 +27,6 @@
     "viem": "^2.39.0",
     "yargs": "^18.0.0",
     "zod": "^4.1.12",
-    "@bnhpio/thyme-sdk": "workspace:*"
+    "@bnhpio/thyme-sdk": "0.0.4"
   }
 }

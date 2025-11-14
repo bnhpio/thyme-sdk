@@ -6,6 +6,8 @@ export interface UploadOptions {
   authToken: string;
   /** Organization ID for deployment */
   organizationId: string;
+  /** Environment file to use (default: .env) */
+  envFile?: string;
 }
 
 /**

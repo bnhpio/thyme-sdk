@@ -1,133 +1,43 @@
 import { constants } from 'node:fs';
-import { access } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { loadAndValidateSchema } from '@bnhpio/thyme-sdk/task/schema';
-import type { Runner } from '@bnhpio/thyme-sdk/task/transaction';
-import { runTask } from '@bnhpio/thyme-sdk/task/transaction';
+import { sandbox } from '@bnhpio/thyme-sdk/sandbox';
+import { validateSchema } from '@bnhpio/thyme-sdk/schema';
 import dotenv from 'dotenv';
-import type { Hex } from 'viem';
-import { isHex } from 'viem';
-import type { CommandModule } from 'yargs';
-import { logger } from '../utils/logger';
-import { parseToml } from '../utils/parseToml';
+import {
+  type Address,
+  createPublicClient,
+  formatEther,
+  http,
+  isAddress,
+} from 'viem';
+import z from 'zod';
+import { parseToml } from '../../utils/parseToml';
+import type { BuildArtifacts } from '../upload/types';
+import { buildArtifacts } from '../upload/upload';
+import type { FunctionPaths, SimulateOptions, SimulationConfig } from './types';
 
 /**
- * Command options interface for the run command
- */
-interface RunOptions {
-  /** Path to the arguments file relative to function directory */
-  args: string;
-  /** Profile name from untl.toml to use for execution */
-  profile: string;
-  /** Path to environment file in project root */
-  envFile: string;
-  /** Whether to skip simulation before execution */
-  skipSimulation: boolean;
-  /** Whether to skip success callback after execution */
-  skipSuccessCallback: boolean;
-  /** Whether to skip fail callback on execution error */
-  skipFailCallback: boolean;
-}
-
-/**
- * Paths interface for function-related file paths
- */
-interface FunctionPaths {
-  /** Path to the function's index.ts file */
-  sourcePath: string;
-  /** Path to the function's schema.ts file */
-  schemaPath: string;
-  /** Path to the function's args file */
-  argsPath: string;
-  /** Base directory for the function */
-  functionDir: string;
-}
-
-/**
- * Yargs command definition for running a function
- *
- * Executes a function from the ./functions/<function> directory with
- * validated arguments, configuration from untl.toml, and optional
- * simulation and callback controls.
- */
-export const runCommand: CommandModule = {
-  command: 'run <function>',
-  describe: 'Execute a function with validated arguments and configuration',
-  builder: (yargs) =>
-    yargs
-      .positional('function', {
-        description:
-          'The name of the function placed in the ./functions/<function> directory',
-        type: 'string',
-        demandOption: true,
-      })
-      .option('args', {
-        description:
-          'Path to the arguments file in ./functions/<function> (default: args.json)',
-        type: 'string',
-        default: 'args.json',
-      })
-      .option('profile', {
-        description: 'Run profile to use for execution (defined in untl.toml)',
-        type: 'string',
-        demandOption: true,
-      })
-      .option('env', {
-        description:
-          'Environment file to use for execution in root of the project (default: .env)',
-        type: 'string',
-        default: '.env',
-      })
-      .option('skip-simulation', {
-        description: 'Skip simulation before execution (not recommended)',
-        type: 'boolean',
-        default: false,
-      })
-      .option('skip-success-callback', {
-        description: 'Skip success callback after execution',
-        type: 'boolean',
-        default: false,
-      })
-      .option('skip-fail-callback', {
-        description: 'Skip fail callback on execution error',
-        type: 'boolean',
-        default: false,
-      }),
-  handler: async (argv) => {
-    try {
-      await run(argv.function as string, {
-        args: (argv.args as string) || 'args.json',
-        profile: (argv.profile as string) || 'none',
-        envFile: (argv.env as string) || '.env',
-        skipSimulation: argv.skipSimulation as boolean,
-        skipSuccessCallback: argv.skipSuccessCallback as boolean,
-        skipFailCallback: argv.skipFailCallback as boolean,
-      });
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      logger().error('Run command failed:', errorMessage);
-      process.exit(1);
-    }
-  },
-};
-
-/**
- * Main run function that orchestrates the execution of a function
+ * Main simulate function that orchestrates the simulation of a function
  *
  * This function:
- * 1. Validates file paths and existence
- * 2. Loads and validates function arguments against schema
- * 3. Imports the function module
- * 4. Loads configuration from untl.toml
- * 5. Validates configuration values
- * 6. Executes the task with proper error handling
+ * 1. Validates function name and file paths
+ * 2. Validates file existence and accessibility
+ * 3. Loads and validates function arguments against schema
+ * 4. Imports and validates the function module
+ * 5. Loads and validates configuration from untl.toml
+ * 6. Validates configuration values (RPC URL, public key)
+ * 7. Runs simulation and validates results
+ * 8. Displays chain information and gas prices
  *
- * @param functionName - Name of the function to execute
- * @param options - Execution options including paths, profile, and flags
- * @throws Error if validation fails or execution encounters an error
+ * @param functionName - Name of the function to simulate
+ * @param options - Simulation options including paths, profile, and env file
+ * @throws Error if validation fails or simulation encounters an error
  */
-async function run(functionName: string, options: RunOptions): Promise<void> {
+export async function simulate(
+  functionName: string,
+  options: SimulateOptions,
+): Promise<void> {
   // Validate function name to prevent path traversal
   if (!isValidFunctionName(functionName)) {
     throw new Error(
@@ -149,14 +59,21 @@ async function run(functionName: string, options: RunOptions): Promise<void> {
   // Load and validate schema and arguments
   const validatedArgs = await loadAndValidateArguments(paths);
 
-  // Import and validate function module
-  const runner = await importAndValidateRunner(paths.sourcePath);
+  // Build artifacts (source, compiled JS, schema)
+  const artifacts = await buildArtifacts({
+    sourcePath: paths.sourcePath,
+    schemaPath: paths.schemaPath,
+    functionDir: paths.functionDir,
+  });
 
   // Load and validate configuration
   const config = await loadAndValidateConfig(options);
 
-  // Execute the task
-  await executeTask(runner, validatedArgs, config, options);
+  // Run simulation and validate results
+  await runSimulation(artifacts, validatedArgs, config);
+
+  // Display chain information
+  await displayChainInfo(config.rpcUrl);
 }
 
 /**
@@ -196,7 +113,7 @@ function isValidFileName(fileName: string): boolean {
  * @param argsFileName - Name of the args file (default: args.json)
  * @returns Object containing all relevant file paths
  */
-function buildFunctionPaths(
+export function buildFunctionPaths(
   functionName: string,
   argsFileName: string,
 ): FunctionPaths {
@@ -216,9 +133,9 @@ function buildFunctionPaths(
  *
  * Checks:
  * - Function directory exists
- * - Source file (index.ts) exists
- * - Schema file (schema.ts) exists
- * - Args file exists
+ * - Source file (index.ts) exists and is readable
+ * - Schema file (schema.ts) exists and is readable
+ * - Args file exists and is readable
  *
  * @param paths - Object containing file paths to validate
  * @throws Error if any required file is missing or inaccessible
@@ -278,54 +195,33 @@ async function loadAndValidateArguments(
   paths: FunctionPaths,
 ): Promise<unknown> {
   try {
-    const validationResult = await loadAndValidateSchema({
-      schemaPath: paths.schemaPath,
-      argsPath: paths.argsPath,
+    // Load and parse schema
+    const schemaModule: { schema: z.ZodSchema<unknown> } = await import(
+      path.resolve(paths.schemaPath)
+    );
+    const schema = schemaModule.schema;
+
+    // Convert Zod schema to JSON schema
+    const jsonSchema = z.toJSONSchema(schema, {
+      target: 'openapi-3.0',
     });
-    return validationResult.args;
+    const schemaContent = JSON.stringify(jsonSchema, null, 2);
+
+    // Load and parse args
+    const argsJSON = await readFile(path.resolve(paths.argsPath), 'utf-8');
+    const args = JSON.parse(argsJSON);
+
+    const validationResult = await validateSchema(schemaContent, argsJSON);
+    if (!validationResult) {
+      throw new Error(
+        `Schema validation failed for ${paths.argsPath}. Please check the schema and arguments.`,
+      );
+    }
+    return args;
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(
       `Schema validation failed for ${paths.argsPath}: ${errorMessage}`,
-    );
-  }
-}
-
-/**
- * Imports the function module and validates it has a default export
- *
- * @param sourcePath - Path to the function's index.ts file
- * @returns The runner object from the module's default export
- * @throws Error if module cannot be imported or lacks default export
- */
-async function importAndValidateRunner(
-  sourcePath: string,
-): Promise<Runner<unknown>> {
-  try {
-    const source = await import(sourcePath);
-
-    if (!source.default) {
-      throw new Error(
-        `Module ${sourcePath} does not have a default export. Expected a Runner object.`,
-      );
-    }
-
-    // Validate that default export has required methods
-    const runner = source.default as Runner<unknown>;
-    if (typeof runner.run !== 'function') {
-      throw new Error(
-        `Invalid runner: default export must have a 'run' method.`,
-      );
-    }
-
-    return runner;
-  } catch (error) {
-    if (error instanceof Error && error.message.includes('default export')) {
-      throw error;
-    }
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(
-      `Failed to import function module from ${sourcePath}: ${errorMessage}`,
     );
   }
 }
@@ -336,16 +232,16 @@ async function importAndValidateRunner(
  * Validates:
  * - untl.toml file exists
  * - Profile exists in untl.toml
- * - Private key format (hex string)
+ * - Public key format (valid Ethereum address)
  * - RPC URL format (valid URL)
  *
- * @param options - Run options containing profile and env file paths
+ * @param options - Simulate options containing profile and env file paths
  * @returns Validated configuration object
  * @throws Error if configuration is invalid or missing
  */
 async function loadAndValidateConfig(
-  options: RunOptions,
-): Promise<{ privateKey: Hex; rpcUrl: string }> {
+  options: SimulateOptions,
+): Promise<SimulationConfig> {
   const tomlPath = path.join(process.cwd(), 'untl.toml');
 
   // Validate untl.toml exists
@@ -361,7 +257,7 @@ async function loadAndValidateConfig(
   const envVars = parseEnvFile(options.envFile);
 
   // Parse TOML configuration
-  let toml: { rpcUrl: string; privateKey: string; publicKey: string };
+  let toml: { rpcUrl: string; publicKey: string };
   try {
     toml = await parseToml(tomlPath, envVars, options.profile);
   } catch (error) {
@@ -371,10 +267,10 @@ async function loadAndValidateConfig(
     );
   }
 
-  // Validate private key format
-  if (!isHex(toml.privateKey)) {
+  // Validate public key format (must be a valid Ethereum address)
+  if (!isAddress(toml.publicKey)) {
     throw new Error(
-      `Invalid private key format in profile "${options.profile}". Private key must be a valid hex string (0x...).`,
+      `Invalid public key format in profile "${options.profile}". Public key must be a valid Ethereum address (0x...).`,
     );
   }
 
@@ -386,7 +282,7 @@ async function loadAndValidateConfig(
   }
 
   return {
-    privateKey: toml.privateKey as Hex,
+    publicKey: toml.publicKey as Address,
     rpcUrl: toml.rpcUrl,
   };
 }
@@ -412,47 +308,67 @@ function isValidRpcUrl(url: string): boolean {
 }
 
 /**
- * Executes the task with the provided runner, arguments, and configuration
+ * Runs the simulation and validates that all transactions would succeed
  *
- * @param runner - The runner object containing run, success, and fail callbacks
+ * @param runner - The runner object containing the run method
  * @param validatedArgs - Validated arguments to pass to the runner
- * @param config - Configuration containing private key and RPC URL
- * @param options - Execution options including skip flags
- * @throws Error if task execution fails
+ * @param config - Configuration containing public key and RPC URL
+ * @throws Error if simulation fails or any transaction would fail
  */
-async function executeTask(
-  runner: Runner<unknown>,
+async function runSimulation(
+  artifacts: BuildArtifacts,
   validatedArgs: unknown,
-  config: { privateKey: Hex; rpcUrl: string },
-  options: RunOptions,
+  config: SimulationConfig,
 ): Promise<void> {
+  console.log(validatedArgs, config);
+  await sandbox({
+    file: artifacts.jsContent,
+    context: { userArgs: validatedArgs, secrets: {} },
+  });
+}
+
+/**
+ * Displays chain information including chain ID and current gas price
+ *
+ * This provides useful context about the network being simulated on.
+ *
+ * @param rpcUrl - RPC URL to connect to for chain information
+ * @throws Error if unable to connect to RPC or fetch chain information
+ */
+async function displayChainInfo(rpcUrl: string): Promise<void> {
   try {
-    await runTask({
-      runner,
-      options: {
-        privateKey: config.privateKey,
-        rpcUrl: config.rpcUrl,
-        skipSimulation: options.skipSimulation,
-        skipSuccessCallback: options.skipSuccessCallback,
-        skipFailCallback: options.skipFailCallback,
-      },
-      context: {
-        userArgs: validatedArgs,
-        secrets: undefined,
-      },
-      utils: logger(),
+    const publicClient = createPublicClient({
+      transport: http(rpcUrl),
     });
+
+    const [chainId, gasPrice] = await Promise.all([
+      publicClient.getChainId(),
+      publicClient.getGasPrice(),
+    ]);
+
+    console.log('🔍 Chain ID:', chainId);
+    console.log(
+      '🔍 Gas price:',
+      Number(gasPrice),
+      'wei =',
+      formatEther(gasPrice),
+      'ETH',
+    );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    throw new Error(`Task execution failed: ${errorMessage}`);
+    console.warn(
+      `Failed to fetch chain information: ${errorMessage}. Simulation completed but chain info unavailable.`,
+    );
+    // Don't throw - this is informational only
   }
 }
 
 /**
  * Parses environment variables from a .env file
  *
- * @param envFile - Path to the environment file (relative to project root)
+ * @param envFile - Path to the environment file (relative to project root or absolute)
  * @returns Object containing parsed environment variables
+ * @throws Error if env file exists but cannot be parsed
  */
 function parseEnvFile(envFile: string): Record<string, string> {
   const envPath = path.isAbsolute(envFile)

@@ -1,5 +1,5 @@
 import { gunzipSync } from 'zlib';
-import type { ArchiveManifest, DecompressResult, FileEntry } from './types';
+import type { ArchiveManifest, DecompressResult, FileEntry } from './';
 
 /**
  * Decompresses a gzipped archive containing multiple files

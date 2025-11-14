@@ -1,6 +1,6 @@
 {
   "name": "@bnhpio/thyme-cli",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "type": "module",
   "bin": {
     "thyme": "./dist/index.js"
@@ -20,13 +20,13 @@
     "@types/yargs": "^17.0.34",
     "typescript": "^5.9.3"
   },
-  "private": true,
   "dependencies": {
-    "@bnhpio/thyme-sdk": "^0.0.3",
     "@iarna/toml": "^2.2.5",
     "dotenv": "^17.2.3",
     "esbuild": "^0.24.0",
+    "viem": "^2.39.0",
     "yargs": "^18.0.0",
-    "zod": "^4.1.12"
+    "zod": "^4.1.12",
+    "@bnhpio/thyme-sdk": "workspace:*"
   }
 }

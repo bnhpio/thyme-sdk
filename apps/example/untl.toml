@@ -4,10 +4,8 @@
 
 [profiles.alice]
 rpcUrl = "$UNCHAIN_SEPOLIA_RPC_URL"
-privateKey = "$ALICE_PRIVATE_KEY"
 publicKey = "$ALICE_PUBLIC_KEY"
 
 [profiles.bob]
 rpcUrl = "$UNCHAIN_SEPOLIA_RPC_URL"
-privateKey = "$BOB_PRIVATE_KEY"
 publicKey = "$BOB_PUBLIC_KEY"

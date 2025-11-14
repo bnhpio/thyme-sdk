@@ -4,7 +4,7 @@ import {
   http,
   type SimulateCallsReturnType,
 } from 'viem';
-import type { SimulateCallsOptions } from '../types';
+import type { SimulateCallsOptions } from './types';
 
 /**
  * Simulates a set of calls against a given RPC URL and account(optional)
@@ -17,7 +17,7 @@ import type { SimulateCallsOptions } from '../types';
  */
 export async function simulateCalls(
   args: SimulateCallsOptions,
-): Promise<SimulateCallsReturnType<Call[]> | undefined> {
+): Promise<SimulateCallsReturnType<Call[]>> {
   // create public client
   const publicClient = createPublicClient({
     transport: http(args.options.rpcUrl),

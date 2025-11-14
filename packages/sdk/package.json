@@ -3,25 +3,25 @@
   "version": "0.0.3",
   "type": "module",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+    "./runner": {
+      "types": "./dist/runner/index.d.ts",
+      "import": "./dist/runner.js"
     },
-    "./task/archive": {
-      "types": "./dist/task/archive/index.d.ts",
-      "import": "./dist/task/archive.js"
+    "./onchain": {
+      "types": "./dist/onchain/index.d.ts",
+      "import": "./dist/onchain.js"
     },
-    "./task/transaction": {
-      "types": "./dist/task/transaction/index.d.ts",
-      "import": "./dist/task/transaction.js"
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "import": "./dist/schema.js"
     },
-    "./task/schema": {
-      "types": "./dist/task/schema/index.d.ts",
-      "import": "./dist/task/schema.js"
+    "./archive": {
+      "types": "./dist/archive/index.d.ts",
+      "import": "./dist/archive.js"
     },
-    "./account/alchemy": {
-      "types": "./dist/account/alchemy/index.d.ts",
-      "import": "./dist/account/alchemy.js"
+    "./sandbox": {
+      "types": "./dist/sandbox/index.d.ts",
+      "import": "./dist/sandbox.js"
     }
   },
   "types": "./dist/index.d.ts",
@@ -46,6 +46,7 @@
   "dependencies": {
     "ajv": "^8.17.1",
     "viem": "^2.38.6",
+    "vm2": "^3.10.0",
     "zlib": "^1.0.5"
   },
   "module": "src/index.ts"

@@ -5,7 +5,7 @@ export async function parseToml(
   tomlPath: string,
   envs: Record<string, string>,
   profile: string,
-): Promise<{ rpcUrl: string; privateKey: string; publicKey: string }> {
+): Promise<{ rpcUrl: string; publicKey: string }> {
   const toml = await readFile(tomlPath, 'utf-8');
 
   const result = TOML.parse(toml);
@@ -42,15 +42,6 @@ export async function parseToml(
     rpcUrl = localRpcUrl;
   }
 
-  let privateKey = profileData.privateKey;
-  if (privateKey.startsWith('$')) {
-    const localPrivateKey = envs[privateKey.slice(1)];
-    if (!localPrivateKey) {
-      throw new Error(`Environment variable ${privateKey.slice(1)} not found`);
-    }
-    privateKey = localPrivateKey;
-  }
-
   let publicKey = profileData.publicKey;
   if (publicKey.startsWith('$')) {
     const localPublicKey = envs[publicKey.slice(1)];
@@ -62,7 +53,6 @@ export async function parseToml(
 
   return {
     rpcUrl,
-    privateKey,
     publicKey,
   };
 }

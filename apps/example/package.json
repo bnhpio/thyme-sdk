@@ -12,6 +12,7 @@
   "dependencies": {
     "viem": "^2.38.0",
     "zod": "^4.1.12",
-    "@bnhpio/thyme-sdk": "0.0.3"
+    "@bnhpio/thyme-sdk": "workspace:*",
+    "@bnhpio/thyme-cli": "workspace:*"
   }
 }

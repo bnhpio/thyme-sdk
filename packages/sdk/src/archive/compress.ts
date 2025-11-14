@@ -1,5 +1,5 @@
 import { gzipSync } from 'zlib';
-import type { ArchiveManifest, CompressOptions, FileEntry } from './types';
+import type { ArchiveManifest, CompressOptions, FileEntry } from './';
 
 /**
  * Compresses multiple files into a single gzipped archive

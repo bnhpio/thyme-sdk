@@ -1,6 +1,10 @@
 import type { Call, SimulateCallsReturnType } from 'viem';
-import { simulateCalls } from '../onchain/simulate';
-import type { Context, SimulateTaskArgs } from './types';
+import { simulateCalls } from '../onchain';
+import {
+  type Context,
+  NotExecutableError,
+  type SimulateTaskArgs,
+} from './types';
 
 /**
  * Run a simulation task
@@ -17,17 +21,16 @@ import type { Context, SimulateTaskArgs } from './types';
  */
 export async function simulateTask<T>(
   args: SimulateTaskArgs<T>,
-): Promise<SimulateCallsReturnType<Call[]> | undefined> {
+): Promise<SimulateCallsReturnType<Call[]>> {
   const context: Context<T> = {
     userArgs: args.context.userArgs,
     secrets: args.context.secrets || {},
   };
 
-  const result = await args.runner.run(context, args.utils);
+  const result = await args.runner.run(context);
 
   if (result.canExec === false) {
-    console.log(`Can't simulate: ${result.message}`);
-    return undefined;
+    throw new NotExecutableError(`${result.message}`);
   }
 
   return simulateCalls({
@@ -38,5 +41,3 @@ export async function simulateTask<T>(
     },
   });
 }
-
-export * from './validateSimulation';

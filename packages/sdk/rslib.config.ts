@@ -4,10 +4,11 @@ export default defineConfig({
   source: {
     entry: {
       index: './src/index.ts',
-      'task/archive': './src/task/archive/index.ts',
-      'task/transaction': './src/task/transaction/index.ts',
-      'task/schema': './src/task/schema/index.ts',
-      'account/alchemy': './src/account/index.ts',
+      archive: './src/archive/index.ts',
+      runner: './src/runner/index.ts',
+      onchain: './src/onchain/index.ts',
+      schema: './src/schema/index.ts',
+      sandbox: './src/sandbox/index.ts',
     },
   },
   lib: [

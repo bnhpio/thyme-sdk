@@ -1,11 +1,33 @@
 /**
+ * Organization interface from API response
+ */
+export interface Organization {
+  /** Organization ID */
+  id: string;
+  /** Organization name */
+  name: string;
+  /** Organization slug */
+  slug: string;
+  /** User's role in the organization */
+  role: string;
+}
+
+/**
+ * Organizations API response interface
+ */
+export interface OrganizationsResponse {
+  /** List of organizations */
+  organizations: Organization[];
+}
+
+/**
  * Command options interface for the upload command
  */
 export interface UploadOptions {
-  /** Authentication token for deployment */
-  authToken: string;
-  /** Organization ID for deployment */
-  organizationId: string;
+  /** Authentication token for deployment (optional if set via env vars) */
+  authToken?: string;
+  /** Organization ID for deployment (optional - will prompt if not provided) */
+  organizationId?: string;
   /** Environment file to use (default: .env) */
   envFile?: string;
 }

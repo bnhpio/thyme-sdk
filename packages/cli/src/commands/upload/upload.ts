@@ -5,11 +5,14 @@ import path from 'node:path';
 import { compressFiles } from '@bnhpio/thyme-sdk/archive';
 import dotenv from 'dotenv';
 import * as esbuild from 'esbuild';
+import prompts from 'prompts';
 import z from 'zod';
 import type {
   BuildArtifacts,
   CompressionResult,
   DeploymentResponse,
+  Organization,
+  OrganizationsResponse,
   UploadFunctionPaths,
   UploadOptions,
 } from './types';
@@ -40,6 +43,77 @@ function parseEnvFile(envFile: string): Record<string, string> {
   }
 
   return (result.parsed as Record<string, string>) || {};
+}
+
+/**
+ * Fetches list of organizations from the API
+ *
+ * @param deployUrl - Deployment URL
+ * @param authToken - Authentication token
+ * @returns List of organizations
+ * @throws Error if fetch fails
+ */
+async function fetchOrganizations(
+  deployUrl: string,
+  authToken: string,
+): Promise<Organization[]> {
+  try {
+    const response = await fetch(`${deployUrl}/http/api/organization/list`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to fetch organizations: ${errorText}`);
+    }
+
+    const data = (await response.json()) as OrganizationsResponse;
+    return data.organizations;
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to fetch organizations: ${errorMessage}`);
+  }
+}
+
+/**
+ * Interactively prompts user to select an organization
+ *
+ * @param organizations - List of organizations to choose from
+ * @returns Selected organization ID
+ * @throws Error if no organizations available or selection cancelled
+ */
+async function selectOrganization(
+  organizations: Organization[],
+): Promise<string> {
+  if (organizations.length === 0) {
+    throw new Error(
+      'No organizations available. Please create an organization first.',
+    );
+  }
+
+  const choices = organizations.map((org) => ({
+    title: `${org.name} (${org.slug}) - Role: ${org.role}`,
+    value: org.id,
+    description: `ID: ${org.id}`,
+  }));
+
+  const response = await prompts({
+    type: 'select',
+    name: 'organizationId',
+    message: 'Select an organization:',
+    choices,
+    initial: 0,
+  });
+
+  if (!response.organizationId) {
+    throw new Error('Organization selection cancelled.');
+  }
+
+  return response.organizationId as string;
 }
 
 /**
@@ -95,6 +169,16 @@ export async function upload(
     );
   }
 
+  // Get or select organization ID
+  let organizationId = options.organizationId;
+  if (!organizationId) {
+    console.log('📋 Fetching organizations...');
+    const organizations = await fetchOrganizations(deployUrl, authToken);
+    console.log(`✅ Found ${organizations.length} organization(s)`);
+    organizationId = await selectOrganization(organizations);
+    console.log(`✅ Selected organization: ${organizationId}`);
+  }
+
   // Build and validate file paths
   const paths = buildUploadFunctionPaths(functionName);
   await validateUploadPaths(paths);
@@ -114,7 +198,7 @@ export async function upload(
   // Deploy to server
   const deploymentResponse = await deployToServer(
     compressionResult,
-    { ...options, authToken },
+    { ...options, authToken, organizationId },
     deployUrl,
   );
 
@@ -392,7 +476,7 @@ function displayCompressionInfo(result: CompressionResult): void {
  */
 async function deployToServer(
   compressionResult: CompressionResult,
-  options: UploadOptions,
+  options: UploadOptions & { organizationId: string },
   deployUrl: string,
 ): Promise<DeploymentResponse> {
   console.log('🚀 Deploying to server...');

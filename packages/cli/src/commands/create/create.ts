@@ -71,7 +71,7 @@ async function createProject(
 
   await writeFile(
     path.join(projectPath, 'package.json'),
-    JSON.stringify(packageJson, null, 2) + '\n',
+    `${JSON.stringify(packageJson, null, 2)}\n`,
     'utf-8',
   );
 
@@ -101,7 +101,7 @@ async function createProject(
 
   await writeFile(
     path.join(projectPath, 'tsconfig.json'),
-    JSON.stringify(tsconfig, null, 2) + '\n',
+    `${JSON.stringify(tsconfig, null, 2)}\n`,
     'utf-8',
   );
 
@@ -271,7 +271,7 @@ export type Args = z.infer<typeof schema>;
 
   await writeFile(
     path.join(functionDir, 'args.json'),
-    JSON.stringify(argsJson, null, 2) + '\n',
+    `${JSON.stringify(argsJson, null, 2)}\n`,
     'utf-8',
   );
 

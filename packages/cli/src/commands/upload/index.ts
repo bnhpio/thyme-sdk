@@ -20,10 +20,11 @@ export const uploadCommand: CommandModule = {
         demandOption: false,
       })
       .option('organizationId', {
-        description: 'Organization ID',
+        description:
+          'Organization ID (optional - will prompt for selection if not provided)',
         type: 'string',
         alias: 'o',
-        demandOption: true,
+        demandOption: false,
       })
       .option('env', {
         description:
@@ -34,8 +35,8 @@ export const uploadCommand: CommandModule = {
   handler: async (argv) => {
     const functionName = argv.function as string;
     const options: UploadOptions = {
-      authToken: argv.authToken as string,
-      organizationId: argv.organizationId as string,
+      authToken: argv.authToken as string | undefined,
+      organizationId: argv.organizationId as string | undefined,
       envFile: (argv.env as string) || '.env',
     };
 

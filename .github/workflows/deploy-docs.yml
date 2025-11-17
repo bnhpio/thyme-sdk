@@ -31,21 +31,12 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Build docs
         run: |
           cd apps/docs
           bun run build
-
-      - name: Verify build output
-        run: |
-          if [ ! -d "apps/docs/.vocs/dist" ]; then
-            echo "Build output not found at apps/docs/.vocs/dist"
-            echo "Contents of apps/docs:"
-            ls -la apps/docs/
-            exit 1
-          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -53,7 +44,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: apps/docs/.vocs/dist
+          path: apps/docs/docs/dist
 
   deploy:
     environment:

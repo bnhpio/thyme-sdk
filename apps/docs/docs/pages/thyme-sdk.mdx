@@ -1,0 +1,200 @@
+---
+title: Thyme SDK
+description: Build, validate, and simulate automation functions with the Thyme TypeScript SDK.
+---
+
+# Thyme SDK
+
+`@bnhpio/thyme-sdk` powers every Thyme automation. Author runners, validate schemas, sandbox untrusted code, and simulate onchain effects without leaving TypeScript.
+
+## Installation
+
+```bash
+bun add @bnhpio/thyme-sdk
+```
+
+Add the SDK to runtime packages (functions, servers, tests). Keep the CLI as a dev dependency or global tool.
+
+## Module Overview
+
+- **Runner**: declare automation lifecycle callbacks with first-class typing
+- **Sandbox**: execute compiled functions in an isolated VM that captures logs
+- **Onchain**: dry-run transaction batches via viem’s `simulateCalls`
+- **Schema**: turn Zod definitions into JSON Schema and validate user args
+- **Archive**: compress and expand artifacts for uploads or caching
+
+Each module ships as a subpath export (`@bnhpio/thyme-sdk/runner`, `.../sandbox`, etc.), enabling tree shaking.
+
+## Authoring a Runner
+
+Use RORO inputs for clarity and guard invalid states with early returns.
+
+```ts
+import { onFail, onRun, onSuccess } from '@bnhpio/thyme-sdk/runner'
+import { isAddress } from 'viem'
+import type { Args } from './schema'
+
+function createTransferRunner() {
+  const run = onRun<Args>(async (ctx) => {
+    const { address, amount } = ctx.userArgs
+    if (!isAddress(address)) return { canExec: false, message: 'Invalid address' }
+
+    return {
+      canExec: true,
+      calls: [
+        {
+          to: address,
+          data: '0x',
+          value: amount,
+        },
+      ],
+    }
+  })
+
+  const success = onSuccess<Args>(async (ctx, result) => {
+    console.log(`sent ${ctx.userArgs.amount.toString()} wei`, result)
+  })
+
+  const fail = onFail<Args>(async (ctx, result, error) => {
+    console.error('transfer failed', error?.message)
+  })
+
+  return { run, success, fail }
+}
+
+export default createTransferRunner()
+```
+
+### Context
+
+Every callback receives:
+
+- `userArgs`: parsed payload (validated separately)
+- `secrets`: hydrated environment variables or runtime secrets
+- `storage` (optional): metadata persisted between runs
+
+## Validating Inputs
+
+Define schemas with Zod, export the inferred interface, then convert to JSON Schema where required.
+
+```ts
+import { z } from 'zod'
+
+export const schema = z.object({
+  address: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  amount: z.string().transform((value) => BigInt(value)),
+})
+
+export interface Args extends z.infer<typeof schema> {}
+```
+
+When running outside TypeScript (CLI simulations, services), serialize with `z.toJSONSchema` and validate using `@bnhpio/thyme-sdk/schema`.
+
+## Simulating Runs Programmatically
+
+```ts
+import { simulateTask } from '@bnhpio/thyme-sdk/runner'
+import runner from './functions/transfer'
+
+async function previewTransfer() {
+  const rpcUrl = process.env.SEPOLIA_RPC_URL
+  if (!rpcUrl) throw new Error('Missing RPC URL')
+
+  const simulation = await simulateTask({
+    runner,
+    options: {
+      rpcUrl,
+      account: process.env.TEST_ACCOUNT_ADDRESS,
+    },
+    context: {
+      userArgs: {
+        address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+        amount: 1_000_000_000_000_000_000n,
+      },
+      secrets: {
+        API_KEY: process.env.API_KEY ?? '',
+      },
+    },
+  })
+
+  console.log(simulation)
+}
+```
+
+Guard for missing RPC URLs or accounts to avoid opaque viem errors.
+
+## Sandboxed Execution
+
+```ts
+import { sandbox } from '@bnhpio/thyme-sdk/sandbox'
+import { compileFunctionToString } from './build'
+
+async function dryRunCompiledFunction({ path, userArgs, secrets }) {
+  const file = await compileFunctionToString(path)
+  const result = await sandbox({
+    file,
+    context: { userArgs, secrets },
+  })
+
+  return result
+}
+```
+
+Sandbox automatically:
+
+- Captures console output (log, warn, error, info)
+- Cleans temporary files
+- Hides `process.env` unless you pass values through `secrets`
+- Ensures the module exports the expected runner shape
+
+## Onchain Utilities
+
+```ts
+import { simulateCalls } from '@bnhpio/thyme-sdk/onchain'
+
+async function checkBundle({ calls, rpcUrl }) {
+  if (!rpcUrl) throw new Error('Missing RPC URL')
+
+  const { receipts } = await simulateCalls({
+    calls,
+    options: { rpcUrl },
+  })
+
+  return receipts
+}
+```
+
+Use when you only need viem-level simulations without the runner context.
+
+## Packaging Artifacts
+
+```ts
+import { compressFiles, decompressFiles } from '@bnhpio/thyme-sdk/archive'
+
+async function packFunction({ files }) {
+  const archive = await compressFiles(files, {
+    level: 9,
+    includeMetadata: true,
+  })
+
+  return archive
+}
+
+async function unpackFunction({ archive }) {
+  const { files, manifest } = await decompressFiles(archive)
+  return { files, manifest }
+}
+```
+
+Archive manifests include deterministic hashes so you can verify uploads before pushing onchain.
+
+## Recommended Workflow
+
+1. Model inputs with Zod and export interfaces
+2. Author runners with guard clauses and detailed failure messages
+3. Simulate locally using `simulateTask`
+4. Sandbox compiled output before distributing user-submitted code
+5. Package artifacts with `compressFiles` only after validation passes
+
+Combine this SDK with the [Thyme CLI](/cli) to scaffold projects, persist secrets, and deploy functions without bespoke tooling.
+

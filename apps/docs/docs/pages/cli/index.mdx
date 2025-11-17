@@ -1,0 +1,33 @@
+---
+title: Thyme CLI Overview
+description: What the Thyme CLI solves, supported flows, and how the docs are organized.
+---
+
+# Thyme CLI
+
+`@bnhpio/thyme-cli` is the automation control plane: scaffold workspaces, persist secrets, simulate runs, and deploy artifacts without custom scripts. Use Bun for installs and local execution to stay aligned with the project toolchain.
+
+```bash
+bun add -g @bnhpio/thyme-cli
+thyme --help
+```
+
+## Documentation Map
+
+- [Quick Start](/cli/quick-start): install, initialize, and run your first upload with Bun
+- [Commands](/cli/commands): per-command docs with usage, options, flow charts, and tips
+  - [`thyme create`](/cli/commands/thyme-create)
+  - [`thyme auth`](/cli/commands/thyme-auth)
+  - [`thyme simulate`](/cli/commands/thyme-simulate)
+  - [`thyme upload`](/cli/commands/thyme-upload)
+- [Configuration](/cli/configuration): structure of `untl.toml`, `.env`, profiles, and troubleshooting
+
+## When to Use the CLI
+
+- Need reproducible project scaffolding (templates, env files, default functions)
+- Require sandboxed simulations that match production packaging
+- Want to guard deployments behind org IDs and auth tokens without touching scripts
+- Prefer bundling runners with the SDK but delegating orchestration to an opinionated tool
+
+Pair the CLI with the [Thyme SDK](/thyme-sdk) for maximum flexibility: author logic with the SDK, operationalize it with the CLI.
+

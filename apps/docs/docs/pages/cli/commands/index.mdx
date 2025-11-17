@@ -1,0 +1,30 @@
+---
+title: Thyme CLI Commands
+description: High-level overview of all CLI commands before diving into individual references.
+---
+
+# Commands
+
+The CLI exposes four primary commands. Each subpage includes Bun-friendly usage snippets, option tables, execution flow, and best practices.
+
+| Command | Purpose | Typical Stage |
+| --- | --- | --- |
+| [`thyme create`](/cli/commands/thyme-create) | Scaffold projects or functions | Day 0 / feature kick-off |
+| [`thyme auth`](/cli/commands/thyme-auth) | Store auth tokens in `.env` | Once per environment |
+| [`thyme simulate`](/cli/commands/thyme-simulate) | Sandbox & onchain validation | CI + pre-merge |
+| [`thyme upload`](/cli/commands/thyme-upload) | Package and deploy bundles | Release pipeline |
+
+## Global Flags
+
+- `--env <path>`: load environment variables from a specific file (defaults to `.env`)
+- `--debug` *(planned)*: emit verbose logs for sandbox/onchain stages
+
+## Workflow Recommendations
+
+1. Run `thyme create` whenever you need a new function—avoid copying folders manually.
+2. Call `thyme auth` in local and CI environments separately so you can revoke tokens independently.
+3. Gate every PR with `thyme simulate` and publish summaries via CI artifacts.
+4. Limit `thyme upload` to release branches and wrap it in multisig-approved pipelines.
+
+Use the [SDK + CLI workflow guide](/cli-sdk) if you need a narrative from authoring to deployment.
+

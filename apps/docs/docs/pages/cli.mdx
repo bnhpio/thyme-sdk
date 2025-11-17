@@ -1,0 +1,210 @@
+---
+title: Thyme CLI
+description: Scaffold, simulate, and deploy Thyme automation projects from the command line.
+---
+
+# Thyme CLI
+
+`@bnhpio/thyme-cli` wraps the SDK with batteries included workflows: bootstrap projects, manage auth tokens, run simulations, and upload compiled functions without manual scripting. Every example below assumes Bun as the package manager/runtime.
+
+## Installation
+
+Install globally for day-to-day use:
+
+```bash
+bun add -g @bnhpio/thyme-cli
+thyme --help
+```
+
+Or add as a dev dependency and call through `bunx`:
+
+```bash
+bun add -d @bnhpio/thyme-cli
+bunx thyme --help
+```
+
+## Quick Start
+
+```bash
+# Bootstrap a workspace
+thyme create my-automation
+cd my-automation
+bun install
+cp .env.example .env
+
+# Generate a function inside the project
+thyme create transfer-tokens
+
+# Store an auth token once
+thyme auth <token>
+
+# Simulate locally before shipping
+thyme simulate transfer-tokens --profile sepolia-test
+
+# Deploy
+thyme upload transfer-tokens --organizationId <org-id>
+```
+
+## Commands
+
+Each command section uses the same structure: usage, options, execution flow, and best practices. All commands accept `--env <path>` to load a custom environment file unless noted otherwise.
+
+## Command: `thyme create`
+
+Bootstraps a new project when executed outside an existing Thyme workspace, or scaffolds a function when run inside one.
+
+```bash
+# New project
+thyme create my-project --path ./projects
+
+# New function in current workspace
+thyme create swap-tokens --template default
+```
+
+Options:
+
+- `--path`, `-p`: destination path (defaults to `./`)
+- `--template`, `-t`: template alias (default template ships with runner, schema, args)
+
+What you get:
+
+```
+my-project/
+├─ package.json
+├─ tsconfig.json
+├─ untl.toml
+├─ .env.example
+└─ functions/
+   └─ swap-tokens/
+      ├─ index.ts
+      ├─ schema.ts
+      └─ args.json
+```
+
+Tips:
+
+- Keep templates lightweight and add SDK helpers via shared packages instead of duplicating logic.
+- Re-run `thyme create <function>` whenever you need another automation—each folder stays isolated.
+
+## Command: `thyme auth`
+
+Persists an authentication token so future uploads can reuse it.
+
+```bash
+thyme auth eyJh... --env .env.local
+```
+
+Behavior:
+
+1. Reads (or creates) the target `.env`
+2. Ensures `THYME_AUTH_TOKEN=<token>` exists once
+3. Leaves other variables untouched
+
+Store secrets in `.env` only—never hardcode tokens in functions.
+
+## Command: `thyme simulate`
+
+Runs your function through the SDK sandbox + onchain simulator to validate schemas, args, and transaction success.
+
+```bash
+thyme simulate transfer-tokens \
+  --profile sepolia-test \
+  --args custom-args.json \
+  --env .env
+```
+
+Required:
+
+- `--profile`: matches a profile in `untl.toml`
+
+Optional:
+
+- `--args`: relative path under `functions/<name>/` (defaults to `args.json`)
+- `--env`: alternate env file with RPC URLs or secrets
+
+What happens:
+
+1. Validates function folder existence and naming
+2. Converts the Zod schema to JSON schema, validates `args`
+3. Loads profile config from `untl.toml` (RPC URL, account)
+4. Spins up the sandbox, executes runner, collects calls
+5. Uses viem to simulate the call bundle against the RPC endpoint
+6. Prints gas info, failure reasons, and ABI errors if present
+
+Use simulations in CI before approving pull requests to keep deployments deterministic.
+
+## Command: `thyme upload`
+
+Compiles, validates, compresses, and uploads a function bundle.
+
+```bash
+thyme upload transfer-tokens \
+  --organizationId <org-id> \
+  --env .env \
+  --authToken <token> # optional if thyme auth set it earlier
+```
+
+Required:
+
+- `--organizationId`, `-o`: target organization identifier
+
+Optional:
+
+- `--authToken`, `-a`: overrides stored token
+- `--env`: loads `DEPLOY_URL`, secrets, and profile fallbacks from another env file
+
+Sequence:
+
+1. Validates inputs and schema (same as `simulate`)
+2. Compiles TypeScript to ESM JavaScript
+3. Generates JSON Schema manifest
+4. Bundles runner + schema + args via `@bnhpio/thyme-sdk/archive`
+5. Hashes the payload for integrity
+6. Uploads to `DEPLOY_URL` with the auth token
+7. Prints deployment hash on success
+
+Guard the upload step with multisig-controlled tokens or CI secrets scoped to release branches only.
+
+## Configuration Files
+
+### `untl.toml`
+
+Define per-network profiles with env-variable substitution.
+
+```toml
+[profiles]
+
+[profiles.sepolia-test]
+rpcUrl = "$SEPOLIA_RPC_URL"
+publicKey = "$TEST_ACCOUNT_ADDRESS"
+
+[profiles.mainnet]
+rpcUrl = "$MAINNET_RPC_URL"
+publicKey = "$MAINNET_ACCOUNT_ADDRESS"
+```
+
+Place secrets in `.env`, not in the TOML. The CLI expands `$VARIABLE` placeholders using the chosen env file.
+
+### `.env`
+
+Minimum viable variables:
+
+```env
+SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/...
+TEST_ACCOUNT_ADDRESS=0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+DEPLOY_URL=https://api.example.com/deploy
+THYME_AUTH_TOKEN=your-auth-token
+```
+
+Never check real tokens into version control—use `.env.example` for placeholders only.
+
+## Troubleshooting
+
+- **Function not found**: confirm folder exists at `functions/<name>/`
+- **Schema validation failed**: run `npx zod-to-json-schema` to inspect expected args
+- **Missing RPC URL**: ensure the selected profile resolves `$VARIABLE` to a value
+- **Upload rejected**: verify `DEPLOY_URL`, `THYME_AUTH_TOKEN`, and organization ID
+- **Auth token leaked**: rotate the credential, remove it from git history, and re-run `thyme auth`
+
+Use `--debug` (coming soon) or temporary `console.log` statements inside runners to capture more context during simulations.
+

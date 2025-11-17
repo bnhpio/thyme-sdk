@@ -1,0 +1,56 @@
+---
+title: Thyme CLI Configuration
+description: Manage untl.toml, environment files, and troubleshooting steps.
+---
+
+# Configuration
+
+The CLI relies on two key files: `untl.toml` (profiles) and `.env` (secrets + RPC URLs). Keep both under version control (except `.env`) so teammates share the same structure.
+
+## `untl.toml`
+
+```toml
+[profiles]
+
+[profiles.sepolia-test]
+rpcUrl = "$SEPOLIA_RPC_URL"
+publicKey = "$TEST_ACCOUNT_ADDRESS"
+
+[profiles.mainnet]
+rpcUrl = "$MAINNET_RPC_URL"
+publicKey = "$MAINNET_ACCOUNT_ADDRESS"
+```
+
+- `$VARIABLE` placeholders pull from the selected env file.
+- Add descriptive profile names (`sepolia-treasury`, `mainnet-prod`) to keep CI logs readable.
+- Commit this file—only the env values remain secret.
+
+## `.env`
+
+```env
+SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/your-key
+TEST_ACCOUNT_ADDRESS=0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+DEPLOY_URL=https://api.example.com/deploy
+THYME_AUTH_TOKEN=placeholder # set via `thyme auth`
+```
+
+- Never add private keys directly—use key management services and expose signer addresses only.
+- Keep `.env.example` in git with placeholders so new teammates know which variables to supply.
+
+## Troubleshooting
+
+| Symptom | Fix |
+| --- | --- |
+| `Function not found` | Ensure `functions/<name>/` exists with `index.ts`, `schema.ts`, `args.json` |
+| `Schema validation failed` | Sync `args.json` with `schema.ts` or regenerate via test fixtures |
+| `RPC URL missing` | Confirm the profile’s `$VARIABLE` has a value in the chosen `.env` |
+| `Upload rejected (401)` | Token expired ➜ rerun `thyme auth <token>` |
+| `Upload rejected (400)` | Run `thyme simulate` first; fix schema/compilation issues |
+
+## Recommended Git Hygiene
+
+- `.env`, `.env.*` → ignored
+- `.env.example`, `untl.toml`, `functions/**` → committed
+- Rotate auth tokens after every incident or team change
+- Store RPC URLs/keys in your secret manager and inject via CI before running `thyme simulate` or `thyme upload`
+

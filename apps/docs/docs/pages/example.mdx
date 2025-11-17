@@ -1,0 +1,81 @@
+---
+title: Example Automation
+description: A minimal end-to-end Thyme function that sends ETH when conditions are met.
+---
+
+# Example: Timed Transfer
+
+This example shows the full file set for a function that releases ETH to a recipient after a configured timestamp.
+
+## `functions/timed-transfer/schema.ts`
+
+```ts
+import { z } from 'zod'
+
+export const schema = z.object({
+  recipient: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
+  amountWei: z.string().transform((value) => BigInt(value)),
+  releaseAfter: z.number().int().nonnegative(),
+})
+
+export interface Args extends z.infer<typeof schema> {}
+```
+
+## `functions/timed-transfer/index.ts`
+
+```ts
+import { onFail, onRun, onSuccess } from '@bnhpio/thyme-sdk/runner'
+import type { Args } from './schema'
+
+const nowSeconds = () => Math.floor(Date.now() / 1000)
+
+const runner = (() => {
+  const run = onRun<Args>(async (ctx) => {
+    const { recipient, amountWei, releaseAfter } = ctx.userArgs
+    if (nowSeconds() < releaseAfter)
+      return { canExec: false, message: 'Release window not reached' }
+
+    return {
+      canExec: true,
+      calls: [
+        {
+          to: recipient,
+          data: '0x',
+          value: amountWei,
+        },
+      ],
+    }
+  })
+
+  const success = onSuccess<Args>(async (ctx) => {
+    console.log(`Released ${ctx.userArgs.amountWei.toString()} wei`)
+  })
+
+  const fail = onFail<Args>(async (ctx, result, error) => {
+    console.error('Timed transfer failed', error?.message)
+  })
+
+  return { run, success, fail }
+})()
+
+export default runner
+```
+
+## `functions/timed-transfer/args.json`
+
+```json
+{
+  "recipient": "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+  "amountWei": "100000000000000000",
+  "releaseAfter": 1731800000
+}
+```
+
+## Simulate
+
+```bash
+thyme simulate timed-transfer --profile sepolia-test
+```
+
+This validates the schema, executes the runner in the sandbox, and confirms the call bundle via viem. Swap in your own logic, then follow [thyme upload](/cli/commands/thyme-upload) to deploy.
+

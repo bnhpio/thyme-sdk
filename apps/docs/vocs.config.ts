@@ -2,6 +2,7 @@ import { defineConfig } from 'vocs';
 
 export default defineConfig({
   title: 'Thyme Docs',
+  basePath: '/thyme-sdk',
   sidebar: [
     {
       text: 'Thyme',

@@ -57,9 +57,7 @@ export function extractSchemaFromTask(taskCode: string): string | null {
 		const fields: Record<string, unknown> = {}
 
 		// Simple regex to extract field definitions
-		const fieldMatches = schemaContent.matchAll(
-			/(\w+):\s*z\.(\w+)\(\)/g,
-		)
+		const fieldMatches = schemaContent.matchAll(/(\w+):\s*z\.(\w+)\(\)/g)
 
 		for (const match of fieldMatches) {
 			const [, fieldName, fieldType] = match

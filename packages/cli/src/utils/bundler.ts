@@ -96,7 +96,12 @@ export async function bundleTask(taskPath: string): Promise<BundleResult> {
 		throw new Error('No output from bundler')
 	}
 
-	const bundle = result.outputFiles[0].text
+	const outputFile = result.outputFiles[0]
+	if (!outputFile) {
+		throw new Error('No output from bundler')
+	}
+
+	const bundle = outputFile.text
 
 	return {
 		source,

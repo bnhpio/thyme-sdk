@@ -28,6 +28,10 @@
 	],
 	"author": "",
 	"license": "MIT",
+	"publishConfig": {
+		"access": "public",
+		"provenance": true
+	},
 	"dependencies": {
 		"fflate": "^0.8.2",
 		"viem": "^2.21.54",

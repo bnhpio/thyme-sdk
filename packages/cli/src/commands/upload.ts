@@ -4,7 +4,7 @@ import { compressTask } from '../utils/compress'
 import { getEnv, loadEnv } from '../utils/env'
 import { extractSchemaFromTask } from '../utils/schema-extractor'
 import { discoverTasks, getTaskPath, isThymeProject } from '../utils/tasks'
-import { clack, error, info, intro, outro, pc, step, warn } from '../utils/ui'
+import { clack, error, intro, outro, pc } from '../utils/ui'
 
 export async function uploadCommand(
 	taskName?: string,

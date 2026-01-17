@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import type { Address } from 'viem'
-import { http, createPublicClient, formatEther, isAddress } from 'viem'
-import { type TaskConfig, checkDeno, runInDeno } from '../deno/runner'
+import { createPublicClient, formatEther, http, isAddress } from 'viem'
+import { checkDeno, runInDeno, type TaskConfig } from '../deno/runner'
 import { getEnv, loadEnv } from '../utils/env'
 import {
 	discoverTasks,

@@ -1,6 +1,8 @@
-export { defineTask } from './task'
-export { zodExtended as z } from './schema'
+export type { CompressResult, DecompressResult } from './archive'
 export { compressTask, decompressTask } from './archive'
+export type { InferSchema } from './schema'
+export { zodExtended as z } from './schema'
+export { defineTask } from './task'
 export type {
 	Call,
 	FailResult,
@@ -9,5 +11,3 @@ export type {
 	TaskResult,
 	ThymeContext,
 } from './types'
-export type { InferSchema } from './schema'
-export type { CompressResult, DecompressResult } from './archive'

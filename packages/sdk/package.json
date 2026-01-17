@@ -11,13 +11,21 @@
 			"import": "./dist/index.js"
 		}
 	},
-	"files": ["dist"],
+	"files": [
+		"dist"
+	],
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",
 		"test": "echo \"No tests yet\""
 	},
-	"keywords": ["web3", "automation", "ethereum", "tasks", "thyme"],
+	"keywords": [
+		"web3",
+		"automation",
+		"ethereum",
+		"tasks",
+		"thyme"
+	],
 	"author": "",
 	"license": "MIT",
 	"dependencies": {

@@ -1,0 +1,40 @@
+{
+	"name": "@thyme-sh/cli",
+	"version": "0.2.0",
+	"description": "CLI for developing and deploying Thyme tasks",
+	"type": "module",
+	"bin": {
+		"thyme": "./dist/index.js"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"test": "echo \"No tests yet\""
+	},
+	"keywords": [
+		"web3",
+		"automation",
+		"cli",
+		"thyme"
+	],
+	"author": "",
+	"license": "MIT",
+	"dependencies": {
+		"@clack/prompts": "^0.8.2",
+		"@thyme-sh/sdk": "^0.2.0",
+		"commander": "^12.1.0",
+		"dotenv": "^16.4.7",
+		"esbuild": "^0.24.2",
+		"picocolors": "^1.1.1",
+		"viem": "^2.21.54",
+		"zod": "^3.24.1"
+	},
+	"devDependencies": {
+		"@types/node": "^22.10.2",
+		"tsup": "^8.3.5",
+		"typescript": "^5.7.2"
+	}
+}

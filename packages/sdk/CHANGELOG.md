@@ -1,5 +1,11 @@
 # @thyme-sh/sdk
 
+## 0.3.2
+
+### Patch Changes
+
+- 36206bc: improve simulating
+
 ## 0.3.1
 
 ### Patch Changes

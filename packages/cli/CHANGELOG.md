@@ -1,5 +1,13 @@
 # @thyme-sh/cli
 
+## 0.3.2
+
+### Patch Changes
+
+- 36206bc: improve simulating
+- Updated dependencies [36206bc]
+  - @thyme-sh/sdk@0.3.2
+
 ## 0.3.1
 
 ### Patch Changes

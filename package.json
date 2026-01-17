@@ -1,28 +1,20 @@
 {
-  "name": "@bnhpio/root",
-  "private": true,
-  "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "check": "biome check --write",
-    "check-types": "turbo run check-types"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.3.4",
-    "lefthook": "^2.0.2",
-    "turbo": "^2.7.5",
-    "typescript": "5.9.2"
-  },
-  "engines": {
-    "node": ">=18"
-  },
-  "packageManager": "bun@1.2.19",
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
-  "dependencies": {
-    "@commitlint/cli": "^20.1.0",
-    "@commitlint/config-conventional": "^20.0.0"
-  }
+	"name": "thyme-sdk-monorepo",
+	"private": true,
+	"type": "module",
+	"workspaces": ["packages/*"],
+	"scripts": {
+		"build": "bun run --filter '*' build",
+		"dev": "bun run --filter '*' dev",
+		"test": "bun run --filter '*' test",
+		"lint": "biome check .",
+		"format": "biome format --write .",
+		"check": "biome check --write .",
+		"release": "bun run build && changeset publish"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.4",
+		"@changesets/cli": "^2.27.10",
+		"typescript": "^5.7.2"
+	}
 }

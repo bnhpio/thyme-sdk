@@ -12,7 +12,7 @@
 		"lint": "biome check .",
 		"format": "biome format --write .",
 		"check": "biome check --write .",
-		"release": "bun run build && changeset publish"
+		"release": "bun run build && changeset publish --provenance"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.11",

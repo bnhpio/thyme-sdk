@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { isThymeProject } from '../utils/tasks'
+import { isThymeProject, validateTaskName } from '../utils/tasks'
 import { clack, error, intro, outro, pc } from '../utils/ui'
 
 export async function newCommand(taskName?: string) {
@@ -17,14 +17,25 @@ export async function newCommand(taskName?: string) {
 
 	// Prompt for task name if not provided
 	let finalTaskName = taskName
-	if (!finalTaskName) {
+
+	// Validate task name if provided via CLI argument
+	if (finalTaskName) {
+		try {
+			validateTaskName(finalTaskName)
+		} catch (err) {
+			error(err instanceof Error ? err.message : String(err))
+			process.exit(1)
+		}
+	} else {
 		const name = await clack.text({
 			message: 'What is your task name?',
 			placeholder: 'my-task',
 			validate: (value) => {
-				if (!value) return 'Task name is required'
-				if (!/^[a-z0-9-]+$/.test(value))
-					return 'Task name must be lowercase alphanumeric with hyphens'
+				try {
+					validateTaskName(value)
+				} catch (err) {
+					return err instanceof Error ? err.message : String(err)
+				}
 			},
 		})
 
@@ -62,13 +73,19 @@ export default defineTask({
 
 	async run(ctx) {
 		const { targetAddress } = ctx.args
+		const { logger } = ctx
 
-		// Your task logic here
-		console.log('Running task with address:', targetAddress)
+		// Use the logger to output messages to the Thyme dashboard
+		logger.info('Starting task execution')
+		logger.info(\`Processing address: \${targetAddress}\`)
 
 		// Example: Read from blockchain using the public client
 		// const balance = await ctx.client.getBalance({ address: targetAddress })
+		// logger.info(\`Balance: \${balance}\`)
+		//
 		// const blockNumber = await ctx.client.getBlockNumber()
+		// logger.info(\`Current block: \${blockNumber}\`)
+		//
 		// const value = await ctx.client.readContract({
 		//   address: targetAddress,
 		//   abi: [...],
@@ -76,7 +93,12 @@ export default defineTask({
 		//   args: [someAddress],
 		// })
 
+		// Example: Log warnings and errors
+		// logger.warn('Low balance detected')
+		// logger.error('Failed to fetch data')
+
 		// Example: Return calls to execute
+		logger.info('Task completed successfully')
 		return {
 			canExec: true,
 			calls: [

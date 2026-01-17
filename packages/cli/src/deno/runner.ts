@@ -20,6 +20,56 @@ export interface RunResult {
 }
 
 /**
+ * Escape a string for safe use in JavaScript string literals
+ * Prevents command injection attacks
+ */
+function escapeJsString(str: string): string {
+	return str
+		.replace(/\\/g, '\\\\')
+		.replace(/'/g, "\\'")
+		.replace(/"/g, '\\"')
+		.replace(/\n/g, '\\n')
+		.replace(/\r/g, '\\r')
+		.replace(/\t/g, '\\t')
+		.replace(/\0/g, '\\0')
+}
+
+/**
+ * Sanitize args to prevent prototype pollution and injection
+ * Deep clones the object to remove any prototype chain issues
+ */
+function sanitizeArgs(args: unknown): unknown {
+	if (args === null || args === undefined) return args
+	if (typeof args !== 'object') return args
+
+	// Deep clone via JSON to strip prototypes and non-serializable values
+	try {
+		return JSON.parse(JSON.stringify(args))
+	} catch {
+		return {}
+	}
+}
+
+/**
+ * Sanitize error messages to prevent information disclosure
+ * Removes sensitive paths and internal details
+ */
+function sanitizeErrorMessage(error: string): string {
+	// Remove absolute paths (keep only filename)
+	let sanitized = error.replace(/\/[^\s:]+\//g, '.../')
+
+	// Remove stack traces
+	sanitized = sanitized.replace(/\s+at\s+.+/g, '')
+
+	// Limit length
+	if (sanitized.length > 500) {
+		sanitized = `${sanitized.substring(0, 500)}...`
+	}
+
+	return sanitized.trim()
+}
+
+/**
  * Run a task in Deno sandbox - similar to Gelato's w3f test and @deno/sandbox
  * Creates an isolated Deno process with controlled permissions
  */
@@ -30,6 +80,15 @@ export async function runInDeno(
 ): Promise<RunResult> {
 	const taskDir = dirname(resolve(taskPath))
 	const absoluteTaskPath = resolve(taskPath)
+
+	// Escape path for safe JavaScript string interpolation
+	const safeTaskPath = escapeJsString(absoluteTaskPath)
+
+	// Sanitize args to prevent prototype pollution
+	const safeArgs = sanitizeArgs(args)
+
+	// Safely serialize RPC URL
+	const safeRpcUrl = config.rpcUrl ? JSON.stringify(config.rpcUrl) : 'undefined'
 
 	const denoFlags = ['run', '--no-prompt']
 
@@ -52,7 +111,7 @@ export async function runInDeno(
 	// Execution wrapper that loads and runs the task
 	// Similar to how Gelato's w3f test executes functions
 	const execScript = `
-import task from '${absoluteTaskPath}';
+import task from '${safeTaskPath}';
 import { createPublicClient, http } from 'npm:viem@2.21.54';
 
 // Logger for local development - prints directly to console
@@ -91,11 +150,11 @@ const countingHttp = (url) => {
 
 // Create public client for blockchain reads
 const client = createPublicClient({
-	transport: countingHttp(${config.rpcUrl ? `'${config.rpcUrl}'` : 'undefined'}),
+	transport: countingHttp(${safeRpcUrl}),
 });
 
 const context = {
-	args: ${JSON.stringify(args)},
+	args: ${JSON.stringify(safeArgs)},
 	client,
 	logger: new Logger(),
 };
@@ -111,7 +170,8 @@ try {
 	const endMemory = Deno.memoryUsage().heapUsed;
 	
 	const executionTime = endTime - startTime;
-	const memoryUsed = endMemory - startMemory;
+	// Ensure memory measurement is non-negative (GC can cause negative values)
+	const memoryUsed = Math.max(0, endMemory - startMemory);
 	
 	console.log('__THYME_RESULT__' + JSON.stringify(result));
 	console.log('__THYME_STATS__' + JSON.stringify({ executionTime, memoryUsed, rpcRequestCount }));
@@ -124,7 +184,6 @@ try {
 	return new Promise((resolve) => {
 		const proc = spawn('deno', denoFlags, {
 			stdio: ['pipe', 'pipe', 'pipe'],
-			timeout: config.timeout * 1000,
 			cwd: taskDir,
 		})
 
@@ -149,7 +208,9 @@ try {
 				resolve({
 					success: false,
 					logs,
-					error: stderr || `Process exited with code ${code}`,
+					error: sanitizeErrorMessage(
+						stderr || `Process exited with code ${code}`,
+					),
 				})
 				return
 			}
@@ -195,7 +256,9 @@ try {
 				resolve({
 					success: false,
 					logs,
-					error: `Failed to parse result: ${error instanceof Error ? error.message : String(error)}`,
+					error: sanitizeErrorMessage(
+						`Failed to parse result: ${error instanceof Error ? error.message : String(error)}`,
+					),
 				})
 			}
 		})
@@ -204,7 +267,7 @@ try {
 			resolve({
 				success: false,
 				logs,
-				error: `Failed to spawn Deno: ${error.message}`,
+				error: sanitizeErrorMessage(`Failed to spawn Deno: ${error.message}`),
 			})
 		})
 	})

@@ -9,6 +9,7 @@ import {
 	getTaskArgsPath,
 	getTaskPath,
 	isThymeProject,
+	validateTaskName,
 } from '../utils/tasks'
 import {
 	clack,
@@ -49,7 +50,16 @@ export async function runCommand(taskName?: string, options: RunOptions = {}) {
 
 	// Discover tasks if no task name provided
 	let finalTaskName = taskName
-	if (!finalTaskName) {
+
+	// Validate task name if provided via CLI argument
+	if (finalTaskName) {
+		try {
+			validateTaskName(finalTaskName)
+		} catch (err) {
+			error(err instanceof Error ? err.message : String(err))
+			process.exit(1)
+		}
+	} else {
 		const tasks = await discoverTasks(projectRoot)
 
 		if (tasks.length === 0) {
@@ -70,8 +80,15 @@ export async function runCommand(taskName?: string, options: RunOptions = {}) {
 		finalTaskName = selected as string
 	}
 
-	const taskPath = getTaskPath(projectRoot, finalTaskName)
-	const argsPath = getTaskArgsPath(projectRoot, finalTaskName)
+	let taskPath: string
+	let argsPath: string
+	try {
+		taskPath = getTaskPath(projectRoot, finalTaskName)
+		argsPath = getTaskArgsPath(projectRoot, finalTaskName)
+	} catch (err) {
+		error(err instanceof Error ? err.message : String(err))
+		process.exit(1)
+	}
 
 	// Check if task exists
 	if (!existsSync(taskPath)) {

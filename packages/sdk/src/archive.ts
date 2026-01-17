@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate'
 
 export interface CompressResult {
@@ -10,9 +11,21 @@ export interface DecompressResult {
 	bundle: string
 }
 
+// Maximum sizes for ZIP bomb protection
+const MAX_ZIP_SIZE = 10 * 1024 * 1024 // 10MB compressed
+const MAX_DECOMPRESSED_SIZE = 50 * 1024 * 1024 // 50MB decompressed
+
+/**
+ * Calculate SHA-256 checksum of data
+ */
+function calculateSha256(data: Uint8Array): string {
+	return createHash('sha256').update(data).digest('hex')
+}
+
 /**
  * Compress source and bundle into a ZIP archive
  * Uses fflate for fast, modern compression
+ * Uses SHA-256 for cryptographically secure checksum
  */
 export function compressTask(source: string, bundle: string): CompressResult {
 	// Create ZIP archive with both files
@@ -25,16 +38,8 @@ export function compressTask(source: string, bundle: string): CompressResult {
 		level: 6, // Balanced compression
 	})
 
-	// Calculate checksum (simple hash for now)
-	let hash = 0
-	for (let i = 0; i < compressed.length; i++) {
-		const byte = compressed[i]
-		if (byte !== undefined) {
-			hash = (hash << 5) - hash + byte
-			hash = hash & hash // Convert to 32bit integer
-		}
-	}
-	const checksum = Math.abs(hash).toString(16)
+	// Calculate SHA-256 checksum
+	const checksum = calculateSha256(compressed)
 
 	return {
 		zipBuffer: compressed,
@@ -45,6 +50,7 @@ export function compressTask(source: string, bundle: string): CompressResult {
 /**
  * Decompress ZIP archive and extract source and bundle files
  * Uses fflate for fast decompression
+ * Includes ZIP bomb protection
  */
 export function decompressTask(
 	zipBuffer: Uint8Array | ArrayBuffer,
@@ -53,8 +59,30 @@ export function decompressTask(
 	const uint8Array =
 		zipBuffer instanceof ArrayBuffer ? new Uint8Array(zipBuffer) : zipBuffer
 
+	// ZIP bomb protection: check compressed size
+	if (uint8Array.length > MAX_ZIP_SIZE) {
+		throw new Error(
+			`ZIP file too large: ${uint8Array.length} bytes (max: ${MAX_ZIP_SIZE})`,
+		)
+	}
+
 	// Decompress ZIP
 	const decompressed = unzipSync(uint8Array)
+
+	// ZIP bomb protection: check total decompressed size
+	let totalDecompressedSize = 0
+	for (const key of Object.keys(decompressed)) {
+		const file = decompressed[key]
+		if (file) {
+			totalDecompressedSize += file.length
+		}
+	}
+
+	if (totalDecompressedSize > MAX_DECOMPRESSED_SIZE) {
+		throw new Error(
+			`Decompressed content too large: ${totalDecompressedSize} bytes (max: ${MAX_DECOMPRESSED_SIZE})`,
+		)
+	}
 
 	// Extract files
 	const sourceBytes = decompressed['source.ts']

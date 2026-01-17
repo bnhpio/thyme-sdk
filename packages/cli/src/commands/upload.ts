@@ -1,10 +1,36 @@
 import { existsSync } from 'node:fs'
+import { z } from 'zod'
 import { bundleTask } from '../utils/bundler'
 import { compressTask } from '../utils/compress'
 import { getEnv, loadEnv } from '../utils/env'
 import { extractSchemaFromTask } from '../utils/schema-extractor'
-import { discoverTasks, getTaskPath, isThymeProject } from '../utils/tasks'
+import {
+	discoverTasks,
+	getTaskPath,
+	isThymeProject,
+	validateTaskName,
+} from '../utils/tasks'
 import { clack, error, intro, outro, pc } from '../utils/ui'
+
+// Zod schemas for API response validation
+const organizationSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	role: z.string(),
+})
+
+const verifyResponseSchema = z.object({
+	user: z.object({
+		id: z.string(),
+		name: z.string().optional().default(''),
+		email: z.string(),
+	}),
+	organizations: z.array(organizationSchema).optional().default([]),
+})
+
+const uploadResponseSchema = z.object({
+	taskId: z.string().optional(),
+})
 
 export async function uploadCommand(
 	taskName?: string,
@@ -41,7 +67,16 @@ export async function uploadCommand(
 
 	// Discover tasks if no task name provided
 	let finalTaskName = taskName
-	if (!finalTaskName) {
+
+	// Validate task name if provided via CLI argument
+	if (finalTaskName) {
+		try {
+			validateTaskName(finalTaskName)
+		} catch (err) {
+			error(err instanceof Error ? err.message : String(err))
+			process.exit(1)
+		}
+	} else {
 		const tasks = await discoverTasks(projectRoot)
 
 		if (tasks.length === 0) {
@@ -66,7 +101,7 @@ export async function uploadCommand(
 	const orgSpinner = clack.spinner()
 	orgSpinner.start('Fetching organizations...')
 
-	let organizations: { id: string; name: string; role: string }[] = []
+	let organizations: z.infer<typeof organizationSchema>[] = []
 	try {
 		const verifyResponse = await fetch(`${apiUrl}/api/auth/verify`, {
 			method: 'GET',
@@ -81,20 +116,17 @@ export async function uploadCommand(
 			process.exit(1)
 		}
 
-		const verifyData = (await verifyResponse.json()) as {
-			user: {
-				id: string
-				name: string
-				email: string
-			}
-			organizations: {
-				id: string
-				name: string
-				role: string
-			}[]
+		const rawData = await verifyResponse.json()
+
+		// Validate response with Zod
+		const parseResult = verifyResponseSchema.safeParse(rawData)
+		if (!parseResult.success) {
+			orgSpinner.stop('Invalid API response')
+			error(`API returned unexpected data format: ${parseResult.error.message}`)
+			process.exit(1)
 		}
 
-		organizations = verifyData.organizations || []
+		organizations = parseResult.data.organizations
 		orgSpinner.stop('Organizations loaded')
 	} catch (err) {
 		orgSpinner.stop('Failed to fetch organizations')
@@ -140,7 +172,13 @@ export async function uploadCommand(
 		selectedOrgId = selected as string
 	}
 
-	const taskPath = getTaskPath(projectRoot, finalTaskName)
+	let taskPath: string
+	try {
+		taskPath = getTaskPath(projectRoot, finalTaskName)
+	} catch (err) {
+		error(err instanceof Error ? err.message : String(err))
+		process.exit(1)
+	}
 
 	// Check if task exists
 	if (!existsSync(taskPath)) {
@@ -197,7 +235,17 @@ export async function uploadCommand(
 			throw new Error(`Upload failed: ${errorText}`)
 		}
 
-		const result = (await response.json()) as { taskId?: string }
+		const rawResult = await response.json()
+
+		// Validate response with Zod
+		const resultParseResult = uploadResponseSchema.safeParse(rawResult)
+		if (!resultParseResult.success) {
+			throw new Error(
+				`Invalid upload response: ${resultParseResult.error.message}`,
+			)
+		}
+
+		const result = resultParseResult.data
 
 		spinner.stop('Task uploaded successfully!')
 

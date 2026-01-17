@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { Command } from 'commander'
 import { initCommand } from './commands/init'
 import { listCommand } from './commands/list'
@@ -6,12 +9,33 @@ import { newCommand } from './commands/new'
 import { runCommand } from './commands/run'
 import { uploadCommand } from './commands/upload'
 
+// Read version from package.json dynamically
+const __dirname = dirname(fileURLToPath(import.meta.url))
+let version = '0.0.0'
+try {
+	const packageJson = JSON.parse(
+		readFileSync(join(__dirname, '../package.json'), 'utf-8'),
+	)
+	version = packageJson.version || version
+} catch {
+	// Fallback if package.json can't be read (e.g., in bundled builds)
+	// Try one more level up for bundled scenarios
+	try {
+		const packageJson = JSON.parse(
+			readFileSync(join(__dirname, '../../package.json'), 'utf-8'),
+		)
+		version = packageJson.version || version
+	} catch {
+		// Use default version
+	}
+}
+
 const program = new Command()
 
 program
 	.name('thyme')
 	.description('CLI for developing and deploying Thyme tasks')
-	.version('0.1.0')
+	.version(version)
 
 program
 	.command('init')

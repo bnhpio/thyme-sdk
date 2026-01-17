@@ -1,8 +1,28 @@
 import { existsSync } from 'node:fs'
 import { appendFile, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { z } from 'zod'
 import { getEnv, loadEnv } from '../utils/env'
 import { clack, error, info, intro, outro, pc } from '../utils/ui'
+
+// Zod schema for API response validation
+const verifyResponseSchema = z.object({
+	user: z.object({
+		id: z.string(),
+		name: z.string().optional().default(''),
+		email: z.string(),
+	}),
+	organizations: z
+		.array(
+			z.object({
+				id: z.string(),
+				name: z.string(),
+				role: z.string(),
+			}),
+		)
+		.optional()
+		.default([]),
+})
 
 export async function loginCommand() {
 	intro('Thyme CLI - Login')
@@ -66,18 +86,17 @@ export async function loginCommand() {
 			process.exit(1)
 		}
 
-		const verifyData = (await verifyResponse.json()) as {
-			user: {
-				id: string
-				name: string
-				email: string
-			}
-			organizations: {
-				id: string
-				name: string
-				role: string
-			}[]
+		const rawData = await verifyResponse.json()
+
+		// Validate response with Zod
+		const parseResult = verifyResponseSchema.safeParse(rawData)
+		if (!parseResult.success) {
+			spinner.stop('Invalid API response')
+			error(`API returned unexpected data format: ${parseResult.error.message}`)
+			process.exit(1)
 		}
+
+		const verifyData = parseResult.data
 
 		spinner.stop('Token verified!')
 

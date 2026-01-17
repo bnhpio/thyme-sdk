@@ -244,7 +244,11 @@ async function simulateCalls(
 		simulationSpinner.stop('Simulation complete')
 
 		// Check results for failures
-		const failedCalls: Array<{ index: number; call: { to: Address; data: `0x${string}` }; error?: string }> = []
+		const failedCalls: Array<{
+			index: number
+			call: { to: Address; data: `0x${string}` }
+			error?: string
+		}> = []
 		for (let i = 0; i < results.length; i++) {
 			const result = results[i]
 			const call = calls[i]
@@ -263,7 +267,9 @@ async function simulateCalls(
 			log('')
 			error('Some calls would revert:')
 			for (const failed of failedCalls) {
-				error(`  Call ${failed.index + 1} to ${failed.call.to}: ${failed.error}`)
+				error(
+					`  Call ${failed.index + 1} to ${failed.call.to}: ${failed.error}`,
+				)
 			}
 			return
 		}

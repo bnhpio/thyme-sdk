@@ -6,7 +6,10 @@ import { extractSchemaFromTask } from '../utils/schema-extractor'
 import { discoverTasks, getTaskPath, isThymeProject } from '../utils/tasks'
 import { clack, error, info, intro, outro, pc, step, warn } from '../utils/ui'
 
-export async function uploadCommand(taskName?: string, organizationId?: string) {
+export async function uploadCommand(
+	taskName?: string,
+	organizationId?: string,
+) {
 	intro('Thyme CLI - Upload Task')
 
 	const projectRoot = process.cwd()
@@ -101,7 +104,9 @@ export async function uploadCommand(taskName?: string, organizationId?: string) 
 
 	// Check if user has any organizations
 	if (organizations.length === 0) {
-		error('You are not a member of any organizations. Please create or join an organization first.')
+		error(
+			'You are not a member of any organizations. Please create or join an organization first.',
+		)
 		process.exit(1)
 	}
 
@@ -112,7 +117,9 @@ export async function uploadCommand(taskName?: string, organizationId?: string) 
 	if (selectedOrgId) {
 		const orgExists = organizations.find((org) => org.id === selectedOrgId)
 		if (!orgExists) {
-			error(`Organization with ID "${selectedOrgId}" not found or you don't have access to it.`)
+			error(
+				`Organization with ID "${selectedOrgId}" not found or you don't have access to it.`,
+			)
 			process.exit(1)
 		}
 	} else {
@@ -190,7 +197,7 @@ export async function uploadCommand(taskName?: string, organizationId?: string) 
 			throw new Error(`Upload failed: ${errorText}`)
 		}
 
-		const result = await response.json()
+		const result = (await response.json()) as { taskId?: string }
 
 		spinner.stop('Task uploaded successfully!')
 

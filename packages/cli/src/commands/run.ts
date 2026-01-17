@@ -250,15 +250,93 @@ async function simulateCalls(
 		const simulationSpinner = clack.spinner()
 		simulationSpinner.start('Running simulation...')
 
-		const { results } = await client.simulateCalls({
-			account: account as Address,
-			calls: calls.map((call) => ({
-				to: call.to,
-				data: call.data,
-			})),
-		})
+		let usedFallback = false
+		let results: Array<{
+			status: 'success' | 'failure'
+			gasUsed?: bigint
+			error?: { message?: string }
+		}> = []
 
-		simulationSpinner.stop('Simulation complete')
+		try {
+			const batchResult = await client.simulateCalls({
+				account: account as Address,
+				calls: calls.map((call) => ({
+					to: call.to,
+					data: call.data,
+				})),
+			})
+			results = batchResult.results
+		} catch {
+			// eth_simulateV1 not supported, fall back to individual eth_call
+			simulationSpinner.stop('Batch simulation not supported')
+			log('')
+			warn(
+				'RPC does not support eth_simulateV1 (batch simulation). Falling back to individual calls.',
+			)
+			warn(
+				pc.yellow(
+					'⚠️  Note: Individual simulation cannot detect failures in dependent transactions.',
+				),
+			)
+			warn(
+				pc.yellow(
+					'   If your calls depend on each other (e.g., approve then swap), simulation may pass but execution could fail.',
+				),
+			)
+			log('')
+
+			usedFallback = true
+			const fallbackSpinner = clack.spinner()
+			fallbackSpinner.start('Running individual simulations...')
+
+			// Simulate each call individually using eth_call
+			for (let i = 0; i < calls.length; i++) {
+				const call = calls[i]
+				if (!call) continue
+
+				try {
+					// Use eth_call to simulate
+					await client.call({
+						account: account as Address,
+						to: call.to,
+						data: call.data,
+					})
+
+					// Estimate gas for successful call
+					let gasUsed: bigint | undefined
+					try {
+						gasUsed = await client.estimateGas({
+							account: account as Address,
+							to: call.to,
+							data: call.data,
+						})
+					} catch {
+						// Gas estimation failed, continue without gas info
+					}
+
+					results.push({
+						status: 'success',
+						gasUsed,
+					})
+				} catch (callError) {
+					results.push({
+						status: 'failure',
+						error: {
+							message:
+								callError instanceof Error
+									? callError.message
+									: String(callError),
+						},
+					})
+				}
+			}
+
+			fallbackSpinner.stop('Individual simulations complete')
+		}
+
+		if (!usedFallback) {
+			simulationSpinner.stop('Simulation complete')
+		}
 
 		// Check results for failures
 		const failedCalls: Array<{
@@ -296,6 +374,15 @@ async function simulateCalls(
 
 		clack.log.step('Simulation results:')
 		clack.log.success('All calls would succeed')
+
+		// Show warning again if fallback was used
+		if (usedFallback && calls.length > 1) {
+			clack.log.warn(
+				pc.yellow(
+					'Results may not reflect actual execution if calls are dependent on each other.',
+				),
+			)
+		}
 
 		// Show gas usage if available
 		const totalGas = results.reduce((sum, r) => sum + (r.gasUsed || 0n), 0n)

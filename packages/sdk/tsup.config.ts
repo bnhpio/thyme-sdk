@@ -7,5 +7,5 @@ export default defineConfig({
 	clean: true,
 	sourcemap: true,
 	minify: false,
-	external: ['viem', 'zod'],
+	external: ['viem', 'zod', 'node:crypto'],
 })

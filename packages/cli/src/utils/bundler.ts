@@ -14,8 +14,8 @@ export async function bundleTask(taskPath: string): Promise<BundleResult> {
 	// Read original source
 	const source = await readFile(taskPath, 'utf-8')
 
-	// Node.js built-in modules that should not be bundled
-	const nodeBuiltins = [
+	// Node.js built-in modules (bare names without node: prefix)
+	const nodeBuiltinNames = [
 		'assert',
 		'buffer',
 		'child_process',
@@ -45,37 +45,17 @@ export async function bundleTask(taskPath: string): Promise<BundleResult> {
 		'v8',
 		'vm',
 		'zlib',
-		// Node: prefix versions
-		'node:assert',
-		'node:buffer',
-		'node:child_process',
-		'node:cluster',
-		'node:crypto',
-		'node:dgram',
-		'node:dns',
-		'node:events',
-		'node:fs',
-		'node:http',
-		'node:http2',
-		'node:https',
-		'node:net',
-		'node:os',
-		'node:path',
-		'node:perf_hooks',
-		'node:process',
-		'node:querystring',
-		'node:readline',
-		'node:stream',
-		'node:string_decoder',
-		'node:timers',
-		'node:tls',
-		'node:tty',
-		'node:url',
-		'node:util',
-		'node:v8',
-		'node:vm',
-		'node:zlib',
 	]
+
+	// Create alias map to rewrite bare Node.js imports to node: prefix
+	// This is required for Deno compatibility (Deno requires node: prefix)
+	const nodeBuiltinAlias: Record<string, string> = {}
+	for (const name of nodeBuiltinNames) {
+		nodeBuiltinAlias[name] = `node:${name}`
+	}
+
+	// Only mark node: prefixed versions as external (after alias rewrites them)
+	const nodeBuiltinsExternal = nodeBuiltinNames.map((name) => `node:${name}`)
 
 	// Bundle with esbuild
 	const result = await build({
@@ -88,7 +68,8 @@ export async function bundleTask(taskPath: string): Promise<BundleResult> {
 		treeShaking: true,
 		minify: false, // Keep readable for debugging
 		sourcemap: false,
-		external: nodeBuiltins, // Don't bundle Node.js built-ins
+		alias: nodeBuiltinAlias, // Rewrite bare imports to node: prefix for Deno
+		external: nodeBuiltinsExternal, // Don't bundle Node.js built-ins
 		logLevel: 'silent',
 	})
 

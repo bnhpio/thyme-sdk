@@ -90,7 +90,51 @@ export async function runInDeno(
 	// Safely serialize RPC URL
 	const safeRpcUrl = config.rpcUrl ? JSON.stringify(config.rpcUrl) : 'undefined'
 
+	// Node.js built-in modules that need to be mapped to node: prefix for Deno
+	const nodeBuiltins = [
+		'assert',
+		'buffer',
+		'child_process',
+		'cluster',
+		'crypto',
+		'dgram',
+		'dns',
+		'events',
+		'fs',
+		'http',
+		'http2',
+		'https',
+		'net',
+		'os',
+		'path',
+		'perf_hooks',
+		'process',
+		'querystring',
+		'readline',
+		'stream',
+		'string_decoder',
+		'timers',
+		'tls',
+		'tty',
+		'url',
+		'util',
+		'v8',
+		'vm',
+		'zlib',
+	]
+
+	// Create import map to redirect bare Node.js imports to node: prefix
+	const importMap: Record<string, string> = {}
+	for (const name of nodeBuiltins) {
+		importMap[name] = `node:${name}`
+	}
+	const importMapJson = JSON.stringify({ imports: importMap })
+	const importMapDataUrl = `data:application/json,${encodeURIComponent(importMapJson)}`
+
 	const denoFlags = ['run', '--no-prompt']
+
+	// Add import map to redirect bare Node.js imports to node: prefix
+	denoFlags.push(`--import-map=${importMapDataUrl}`)
 
 	// Sandbox permissions - minimal by default, similar to @deno/sandbox
 	denoFlags.push(`--allow-read=${taskDir}`) // Only allow reading task directory

@@ -2,6 +2,11 @@
 	"name": "@thyme-sh/cli",
 	"version": "0.3.0",
 	"description": "CLI for developing and deploying Thyme tasks",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/bnhpio/thyme-sdk.git",
+		"directory": "packages/cli"
+	},
 	"type": "module",
 	"bin": {
 		"thyme": "./dist/index.js"

@@ -2,6 +2,11 @@
 	"name": "@thyme-sh/sdk",
 	"version": "0.3.0",
 	"description": "SDK for authoring Web3 automation tasks",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/bnhpio/thyme-sdk.git",
+		"directory": "packages/sdk"
+	},
 	"type": "module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",

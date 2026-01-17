@@ -1,6 +1,10 @@
 {
 	"name": "thyme-sdk-monorepo",
 	"private": true,
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/bnhpio/thyme-sdk.git"
+	},
 	"type": "module",
 	"workspaces": [
 		"packages/*"

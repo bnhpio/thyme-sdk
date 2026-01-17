@@ -1,5 +1,13 @@
 # @thyme-sh/cli
 
+## 0.3.1
+
+### Patch Changes
+
+- 2d63996: added logger support
+- Updated dependencies [2d63996]
+  - @thyme-sh/sdk@0.3.1
+
 ## 0.3.0
 
 ### Minor Changes

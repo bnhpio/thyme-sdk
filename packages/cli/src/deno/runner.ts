@@ -55,6 +55,22 @@ export async function runInDeno(
 import task from '${absoluteTaskPath}';
 import { createPublicClient, http } from 'npm:viem@2.21.54';
 
+// Logger for local development - prints directly to console
+// (In production, the logger outputs with __THYME_LOG__ prefix for capture)
+class Logger {
+	info(message) {
+		console.log('[INFO]', message);
+	}
+	
+	warn(message) {
+		console.log('[WARN]', message);
+	}
+	
+	error(message) {
+		console.log('[ERROR]', message);
+	}
+}
+
 // Create RPC request counter
 let rpcRequestCount = 0;
 
@@ -81,6 +97,7 @@ const client = createPublicClient({
 const context = {
 	args: ${JSON.stringify(args)},
 	client,
+	logger: new Logger(),
 };
 
 try {

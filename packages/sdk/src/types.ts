@@ -1,5 +1,6 @@
 import type { Address, Hex, PublicClient } from 'viem'
 import type { z } from 'zod'
+import type { Logger } from './logger'
 
 /**
  * Context provided to task execution
@@ -9,6 +10,8 @@ export interface ThymeContext<TArgs> {
 	args: TArgs
 	/** Viem public client for reading blockchain data */
 	client: PublicClient
+	/** Logger for outputting messages to the Thyme dashboard */
+	logger: Logger
 }
 
 /**

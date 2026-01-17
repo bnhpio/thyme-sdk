@@ -1,6 +1,6 @@
 {
 	"name": "@thyme-sh/sdk",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "SDK for authoring Web3 automation tasks",
 	"type": "module",
 	"main": "./dist/index.js",

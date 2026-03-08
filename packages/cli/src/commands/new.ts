@@ -63,7 +63,7 @@ export async function newCommand(taskName?: string) {
 		await mkdir(taskPath, { recursive: true })
 
 		// Create index.ts
-		const indexTs = `import { defineTask, z } from '@thyme-sh/sdk'
+		const indexTs = `import { defineTask, z } from '@thyme-labs/sdk'
 import { encodeFunctionData } from 'viem'
 
 export default defineTask({

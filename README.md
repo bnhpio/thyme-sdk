@@ -4,14 +4,14 @@ A clean, modern toolkit for building and deploying Web3 automation tasks.
 
 ## Packages
 
-- **[@thyme-sh/sdk](./packages/sdk)** - SDK for authoring Web3 tasks
-- **[@thyme-sh/cli](./packages/cli)** - CLI for local development and deployment
+- **[@thyme-labs/sdk](./packages/sdk)** - SDK for authoring Web3 tasks
+- **[@thyme-labs/cli](./packages/cli)** - CLI for local development and deployment
 
 ## Quick Start
 
 ```bash
 # Install CLI globally
-npm install -g @thyme-sh/cli
+npm install -g @thyme-labs/cli
 
 # Create new project
 thyme init my-project

@@ -1,4 +1,4 @@
-# @thyme-sh/cli
+# @thyme-labs/cli
 
 ## 0.3.2
 
@@ -6,7 +6,7 @@
 
 - 36206bc: improve simulating
 - Updated dependencies [36206bc]
-  - @thyme-sh/sdk@0.3.2
+  - @thyme-labs/sdk@0.3.2
 
 ## 0.3.1
 
@@ -14,7 +14,7 @@
 
 - 2d63996: added logger support
 - Updated dependencies [2d63996]
-  - @thyme-sh/sdk@0.3.1
+  - @thyme-labs/sdk@0.3.1
 
 ## 0.3.0
 
@@ -27,4 +27,4 @@
 - 031ffcc: release
 - Updated dependencies [031ffcc]
 - Updated dependencies [6716df4]
-  - @thyme-sh/sdk@0.3.0
+  - @thyme-labs/sdk@0.3.0

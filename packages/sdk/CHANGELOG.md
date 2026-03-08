@@ -1,4 +1,4 @@
-# @thyme-sh/sdk
+# @thyme-labs/sdk
 
 ## 0.3.2
 

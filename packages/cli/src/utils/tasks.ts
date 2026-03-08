@@ -127,7 +127,7 @@ export function getTaskArgsPath(projectRoot: string, taskName: string): string {
 
 /**
  * Check if we're in a Thyme project
- * Validates by checking for functions directory AND package.json with @thyme-sh/sdk
+ * Validates by checking for functions directory AND package.json with @thyme-labs/sdk
  */
 export function isThymeProject(projectRoot: string): boolean {
 	const functionsDir = join(projectRoot, 'functions')
@@ -148,7 +148,7 @@ export function isThymeProject(projectRoot: string): boolean {
 				...packageJson.dependencies,
 				...packageJson.devDependencies,
 			}
-			return '@thyme-sh/sdk' in deps || '@thyme-sh/cli' in deps
+			return '@thyme-labs/sdk' in deps || '@thyme-labs/cli' in deps
 		} catch {
 			// If we can't read package.json, fall back to just checking functions dir
 			return true

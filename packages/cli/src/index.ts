@@ -67,7 +67,10 @@ program
 	.command('upload')
 	.description('Upload a task to Thyme Cloud')
 	.argument('[task]', 'Task name')
-	.option('-o, --organization <id>', 'Organization ID to upload to')
-	.action((task, options) => uploadCommand(task, options.organization))
+	.option('-w, --workspace <id>', 'Workspace ID to upload to')
+	.option('-p, --project <id>', 'Project ID to upload to')
+	.action((task, options) =>
+		uploadCommand(task, options.workspace, options.project),
+	)
 
 program.parse()

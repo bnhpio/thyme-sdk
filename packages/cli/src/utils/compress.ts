@@ -1,4 +1,4 @@
-import { compressTask as sdkCompressTask } from '@thyme-sh/sdk'
+import { compressTask as sdkCompressTask } from '@thyme-labs/sdk'
 
 export interface CompressResult {
 	zipBuffer: Buffer

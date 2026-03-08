@@ -1,5 +1,5 @@
 {
-	"name": "@thyme-sh/sdk",
+	"name": "@thyme-labs/sdk",
 	"version": "0.3.2",
 	"description": "SDK for authoring Web3 automation tasks",
 	"repository": {

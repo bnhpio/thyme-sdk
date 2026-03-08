@@ -1,11 +1,11 @@
-# @thyme-sh/cli
+# @thyme-labs/cli
 
 CLI for developing and deploying Thyme Web3 automation tasks.
 
 ## Installation
 
 ```bash
-npm install -g @thyme-sh/cli
+npm install -g @thyme-labs/cli
 ```
 
 ## Commands

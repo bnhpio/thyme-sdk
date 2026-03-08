@@ -12,7 +12,7 @@ export const zodExtended = {
 	 *
 	 * @example
 	 * ```typescript
-	 * import { zodExtended as z } from '@thyme-sh/sdk'
+	 * import { zodExtended as z } from '@thyme-labs/sdk'
 	 *
 	 * const schema = z.object({
 	 *   targetAddress: z.address(),

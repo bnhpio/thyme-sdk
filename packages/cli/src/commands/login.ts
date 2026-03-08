@@ -5,23 +5,25 @@ import { z } from 'zod'
 import { getEnv, loadEnv } from '../utils/env'
 import { clack, error, info, intro, outro, pc } from '../utils/ui'
 
-// Zod schema for API response validation
+const projectSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+})
+
+const workspaceSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+	role: z.string(),
+	projects: z.array(projectSchema).optional().default([]),
+})
+
 const verifyResponseSchema = z.object({
 	user: z.object({
 		id: z.string(),
 		name: z.string().optional().default(''),
 		email: z.string(),
 	}),
-	organizations: z
-		.array(
-			z.object({
-				id: z.string(),
-				name: z.string(),
-				role: z.string(),
-			}),
-		)
-		.optional()
-		.default([]),
+	workspaces: z.array(workspaceSchema).optional().default([]),
 })
 
 export async function loginCommand() {
@@ -36,7 +38,7 @@ export async function loginCommand() {
 	// Show instructions
 	info('To authenticate with Thyme Cloud:')
 	clack.log.message(
-		`  1. Visit ${pc.cyan('https://thyme.sh/settings/api-keys')}`,
+		`  1. Visit ${pc.cyan('https://thyme.sh/dashboard/api-keys')}`,
 	)
 	clack.log.message('  2. Generate a new API token')
 	clack.log.message('  3. Copy the token and paste it below')
@@ -132,11 +134,14 @@ export async function loginCommand() {
 		)
 		clack.log.message(`  ${pc.cyan('Email:')} ${verifyData.user.email}`)
 
-		if (verifyData.organizations && verifyData.organizations.length > 0) {
+		if (verifyData.workspaces && verifyData.workspaces.length > 0) {
 			clack.log.message('')
-			clack.log.message(`${pc.cyan('Organizations:')}`)
-			for (const org of verifyData.organizations) {
-				clack.log.message(`  • ${org.name} ${pc.dim(`(${org.role})`)}`)
+			clack.log.message(`${pc.cyan('Workspaces:')}`)
+			for (const ws of verifyData.workspaces) {
+				clack.log.message(`  • ${ws.name} ${pc.dim(`(${ws.role})`)}`)
+				for (const proj of ws.projects) {
+					clack.log.message(`    └ ${proj.name}`)
+				}
 			}
 		}
 

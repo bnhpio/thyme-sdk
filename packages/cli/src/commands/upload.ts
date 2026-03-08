@@ -13,10 +13,16 @@ import {
 import { clack, error, intro, outro, pc } from '../utils/ui'
 
 // Zod schemas for API response validation
-const organizationSchema = z.object({
+const projectSchema = z.object({
+	id: z.string(),
+	name: z.string(),
+})
+
+const workspaceSchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	role: z.string(),
+	projects: z.array(projectSchema).optional().default([]),
 })
 
 const verifyResponseSchema = z.object({
@@ -25,7 +31,7 @@ const verifyResponseSchema = z.object({
 		name: z.string().optional().default(''),
 		email: z.string(),
 	}),
-	organizations: z.array(organizationSchema).optional().default([]),
+	workspaces: z.array(workspaceSchema).optional().default([]),
 })
 
 const uploadResponseSchema = z.object({
@@ -34,7 +40,8 @@ const uploadResponseSchema = z.object({
 
 export async function uploadCommand(
 	taskName?: string,
-	organizationId?: string,
+	workspaceId?: string,
+	projectId?: string,
 ) {
 	intro('Thyme CLI - Upload Task')
 
@@ -97,11 +104,11 @@ export async function uploadCommand(
 		finalTaskName = selected as string
 	}
 
-	// Fetch user's organizations
-	const orgSpinner = clack.spinner()
-	orgSpinner.start('Fetching organizations...')
+	// Fetch user's workspaces and projects
+	const wsSpinner = clack.spinner()
+	wsSpinner.start('Fetching workspaces...')
 
-	let organizations: z.infer<typeof organizationSchema>[] = []
+	let workspaces: z.infer<typeof workspaceSchema>[] = []
 	try {
 		const verifyResponse = await fetch(`${apiUrl}/api/auth/verify`, {
 			method: 'GET',
@@ -111,7 +118,7 @@ export async function uploadCommand(
 		})
 
 		if (!verifyResponse.ok) {
-			orgSpinner.stop('Failed to fetch organizations')
+			wsSpinner.stop('Failed to fetch workspaces')
 			error('Failed to authenticate. Please run `thyme login` again.')
 			process.exit(1)
 		}
@@ -121,46 +128,46 @@ export async function uploadCommand(
 		// Validate response with Zod
 		const parseResult = verifyResponseSchema.safeParse(rawData)
 		if (!parseResult.success) {
-			orgSpinner.stop('Invalid API response')
+			wsSpinner.stop('Invalid API response')
 			error(`API returned unexpected data format: ${parseResult.error.message}`)
 			process.exit(1)
 		}
 
-		organizations = parseResult.data.organizations
-		orgSpinner.stop('Organizations loaded')
+		workspaces = parseResult.data.workspaces
+		wsSpinner.stop('Workspaces loaded')
 	} catch (err) {
-		orgSpinner.stop('Failed to fetch organizations')
+		wsSpinner.stop('Failed to fetch workspaces')
 		error(err instanceof Error ? err.message : String(err))
 		process.exit(1)
 	}
 
-	// Check if user has any organizations
-	if (organizations.length === 0) {
+	if (workspaces.length === 0) {
 		error(
-			'You are not a member of any organizations. Please create or join an organization first.',
+			'You are not a member of any workspaces. Please create or join a workspace first.',
 		)
 		process.exit(1)
 	}
 
-	// Determine organization to upload to
-	let selectedOrgId = organizationId
+	// Step 1: Select workspace
+	let selectedWsId = workspaceId
 
-	// If organization ID was provided, validate it
-	if (selectedOrgId) {
-		const orgExists = organizations.find((org) => org.id === selectedOrgId)
-		if (!orgExists) {
+	if (selectedWsId) {
+		const wsExists = workspaces.find((ws) => ws.id === selectedWsId)
+		if (!wsExists) {
 			error(
-				`Organization with ID "${selectedOrgId}" not found or you don't have access to it.`,
+				`Workspace with ID "${selectedWsId}" not found or you don't have access to it.`,
 			)
 			process.exit(1)
 		}
+	} else if (workspaces.length === 1) {
+		selectedWsId = workspaces[0].id
+		clack.log.info(`Using workspace: ${pc.cyan(workspaces[0].name)}`)
 	} else {
-		// Prompt user to select an organization
 		const selected = await clack.select({
-			message: 'Select an organization to upload to:',
-			options: organizations.map((org) => ({
-				value: org.id,
-				label: `${org.name} ${pc.dim(`(${org.role})`)}`,
+			message: 'Select a workspace:',
+			options: workspaces.map((ws) => ({
+				value: ws.id,
+				label: `${ws.name} ${pc.dim(`(${ws.role})`)}`,
 			})),
 		})
 
@@ -169,8 +176,51 @@ export async function uploadCommand(
 			process.exit(0)
 		}
 
-		selectedOrgId = selected as string
+		selectedWsId = selected as string
 	}
+
+	const selectedWs = workspaces.find((ws) => ws.id === selectedWsId)!
+	const projects = selectedWs.projects
+
+	if (projects.length === 0) {
+		error(
+			`Workspace "${selectedWs.name}" has no projects. Create a project first.`,
+		)
+		process.exit(1)
+	}
+
+	// Step 2: Select project
+	let selectedProjId = projectId
+
+	if (selectedProjId) {
+		const projExists = projects.find((p) => p.id === selectedProjId)
+		if (!projExists) {
+			error(
+				`Project with ID "${selectedProjId}" not found in workspace "${selectedWs.name}".`,
+			)
+			process.exit(1)
+		}
+	} else if (projects.length === 1) {
+		selectedProjId = projects[0].id
+		clack.log.info(`Using project: ${pc.cyan(projects[0].name)}`)
+	} else {
+		const selected = await clack.select({
+			message: 'Select a project:',
+			options: projects.map((p) => ({
+				value: p.id,
+				label: p.name,
+			})),
+		})
+
+		if (clack.isCancel(selected)) {
+			clack.cancel('Operation cancelled')
+			process.exit(0)
+		}
+
+		selectedProjId = selected as string
+	}
+
+	const selectedProj = projects.find((p) => p.id === selectedProjId)!
 
 	let taskPath: string
 	try {
@@ -203,7 +253,31 @@ export async function uploadCommand(
 		// Compress source and bundle into ZIP
 		const { zipBuffer, checksum } = compressTask(source, bundle)
 
-		spinner.message('Uploading to cloud...')
+		spinner.stop('Bundle ready')
+
+		// Summary before upload
+		clack.log.message('')
+		clack.log.info('Upload summary:')
+		clack.log.message(`  ${pc.dim('Workspace:')} ${pc.cyan(selectedWs.name)}`)
+		clack.log.message(`  ${pc.dim('Project:')}   ${pc.cyan(selectedProj.name)}`)
+		clack.log.message(`  ${pc.dim('Task:')}      ${pc.cyan(finalTaskName)}`)
+		clack.log.message(
+			`  ${pc.dim('Size:')}      ${(zipBuffer.length / 1024).toFixed(2)} KB`,
+		)
+		clack.log.message(`  ${pc.dim('Checksum:')}  ${checksum.slice(0, 16)}...`)
+		clack.log.message('')
+
+		const confirm = await clack.confirm({
+			message: 'Proceed with upload?',
+		})
+
+		if (clack.isCancel(confirm) || !confirm) {
+			clack.cancel('Upload cancelled')
+			process.exit(0)
+		}
+
+		const uploadSpinner = clack.spinner()
+		uploadSpinner.start('Uploading to cloud...')
 
 		// Create form data
 		const formData = new FormData()
@@ -212,7 +286,9 @@ export async function uploadCommand(
 		formData.append(
 			'data',
 			JSON.stringify({
-				organizationId: selectedOrgId as string,
+				workspaceId: selectedWsId as string,
+				projectId: selectedProjId as string,
+				taskName: finalTaskName,
 				checkSum: checksum,
 				schema: schema || undefined,
 			}),
@@ -247,16 +323,13 @@ export async function uploadCommand(
 
 		const result = resultParseResult.data
 
-		spinner.stop('Task uploaded successfully!')
-
-		const selectedOrg = organizations.find((org) => org.id === selectedOrgId)
+		uploadSpinner.stop('Task uploaded successfully!')
 
 		clack.log.message('')
 		clack.log.success('Upload details:')
 		clack.log.message(`  ${pc.dim('Task:')} ${pc.cyan(finalTaskName)}`)
-		clack.log.message(
-			`  ${pc.dim('Organization:')} ${pc.cyan(selectedOrg?.name || 'Unknown')}`,
-		)
+		clack.log.message(`  ${pc.dim('Workspace:')} ${pc.cyan(selectedWs.name)}`)
+		clack.log.message(`  ${pc.dim('Project:')} ${pc.cyan(selectedProj.name)}`)
 		clack.log.message(
 			`  ${pc.dim('Size:')} ${(zipBuffer.length / 1024).toFixed(2)} KB`,
 		)

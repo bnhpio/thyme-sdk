@@ -1,11 +1,11 @@
-# @thyme-sh/sdk
+# @thyme-labs/sdk
 
 SDK for authoring Web3 automation tasks with Thyme.
 
 ## Installation
 
 ```bash
-npm install @thyme-sh/sdk zod viem
+npm install @thyme-labs/sdk zod viem
 ```
 
 ## Usage
@@ -13,7 +13,7 @@ npm install @thyme-sh/sdk zod viem
 Create a task with embedded schema:
 
 ```typescript
-import { defineTask, z } from '@thyme-sh/sdk'
+import { defineTask, z } from '@thyme-labs/sdk'
 import { encodeFunctionData } from 'viem'
 
 const abi = [
@@ -95,7 +95,7 @@ The SDK provides an extended Zod instance with Ethereum-specific validators:
 Validates an Ethereum address and returns viem's `Address` type:
 
 ```typescript
-import { defineTask, z } from '@thyme-sh/sdk'
+import { defineTask, z } from '@thyme-labs/sdk'
 
 export default defineTask({
   schema: z.object({
@@ -130,7 +130,7 @@ schema: z.object({
 The context includes a viem `PublicClient` for reading blockchain data:
 
 ```typescript
-import { defineTask, z } from '@thyme-sh/sdk'
+import { defineTask, z } from '@thyme-labs/sdk'
 
 export default defineTask({
   schema: z.object({
@@ -183,7 +183,7 @@ The client is configured using the `RPC_URL` environment variable in your `.env`
 Use viem's `encodeFunctionData` to encode function calls:
 
 ```typescript
-import { defineTask, z } from '@thyme-sh/sdk'
+import { defineTask, z } from '@thyme-labs/sdk'
 import { encodeFunctionData } from 'viem'
 
 const abi = [

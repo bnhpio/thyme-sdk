@@ -6,7 +6,7 @@ import type { TaskDefinition } from './types'
  *
  * @example
  * ```typescript
- * import { defineTask, z } from '@thyme-sh/sdk'
+ * import { defineTask, z } from '@thyme-labs/sdk'
  * import { encodeFunctionData } from 'viem'
  *
  * const abi = [

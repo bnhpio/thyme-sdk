@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
-import type { TaskResult } from '@thyme-sh/sdk'
+import type { TaskResult } from '@thyme-labs/sdk'
 
 export interface TaskConfig {
 	memory: number // MB

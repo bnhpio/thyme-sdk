@@ -53,12 +53,12 @@ export async function initCommand(projectName?: string) {
 				dev: 'thyme run',
 			},
 			dependencies: {
-				'@thyme-sh/sdk': '^0.1.0',
+				'@thyme-labs/sdk': '^0.1.0',
 				viem: '^2.21.54',
 				zod: '^3.24.1',
 			},
 			devDependencies: {
-				'@thyme-sh/cli': '^0.1.0',
+				'@thyme-labs/cli': '^0.1.0',
 				typescript: '^5.7.2',
 			},
 		}

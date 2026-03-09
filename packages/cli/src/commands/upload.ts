@@ -2,7 +2,8 @@ import { existsSync } from 'node:fs'
 import { z } from 'zod'
 import { bundleTask } from '../utils/bundler'
 import { compressTask } from '../utils/compress'
-import { getEnv, loadEnv } from '../utils/env'
+import { getApiUrl, getAuthToken } from '../utils/config'
+import { loadEnv } from '../utils/env'
 import { extractSchemaFromTask } from '../utils/schema-extractor'
 import {
 	discoverTasks,
@@ -57,14 +58,14 @@ export async function uploadCommand(
 	}
 
 	// Check for auth token
-	const authToken = getEnv('THYME_AUTH_TOKEN')
+	const authToken = getAuthToken()
 	if (!authToken) {
 		error('Not authenticated. Run `thyme login` first.')
 		process.exit(1)
 	}
 
 	// Get API URL (Convex deployment URL)
-	const apiUrl = getEnv('THYME_API_URL')
+	const apiUrl = getApiUrl()
 	if (!apiUrl) {
 		error(
 			'THYME_API_URL is not set. Please set it to your Convex deployment URL in .env',

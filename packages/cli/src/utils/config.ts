@@ -1,0 +1,78 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+import { getEnv } from './env'
+
+interface Config {
+	authToken?: string
+	apiUrl?: string
+}
+
+export function getConfigDir(): string {
+	const dir = join(homedir(), '.thyme')
+	if (!existsSync(dir)) {
+		mkdirSync(dir, { recursive: true })
+	}
+	return dir
+}
+
+function getConfigPath(): string {
+	return join(getConfigDir(), 'config.json')
+}
+
+export function readConfig(): Config {
+	const configPath = getConfigPath()
+	if (!existsSync(configPath)) {
+		return {}
+	}
+	try {
+		return JSON.parse(readFileSync(configPath, 'utf-8'))
+	} catch {
+		return {}
+	}
+}
+
+export function writeConfig(config: Config): void {
+	const configPath = getConfigPath()
+	writeFileSync(configPath, JSON.stringify(config, null, 2), {
+		mode: 0o600,
+	})
+}
+
+export function getAuthToken(): string | undefined {
+	// 1. Global config
+	const config = readConfig()
+	if (config.authToken) return config.authToken
+
+	// 2. Environment variable or .env file
+	return getEnv('THYME_AUTH_TOKEN')
+}
+
+export function setAuthToken(token: string): void {
+	const config = readConfig()
+	config.authToken = token
+	writeConfig(config)
+}
+
+export function clearAuthToken(): void {
+	const config = readConfig()
+	delete config.authToken
+	writeConfig(config)
+}
+
+const DEFAULT_API_URL = 'https://convex-backend-production-f25e.up.railway.app/http'
+
+export function getApiUrl(): string {
+	// 1. Global config
+	const config = readConfig()
+	if (config.apiUrl) return config.apiUrl
+
+	// 2. Environment variable or .env file
+	return getEnv('THYME_API_URL') ?? DEFAULT_API_URL
+}
+
+export function setApiUrl(url: string): void {
+	const config = readConfig()
+	config.apiUrl = url
+	writeConfig(config)
+}

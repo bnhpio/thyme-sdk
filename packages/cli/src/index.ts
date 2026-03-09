@@ -5,6 +5,7 @@ import { Command } from 'commander'
 import { initCommand } from './commands/init'
 import { listCommand } from './commands/list'
 import { loginCommand } from './commands/login'
+import { logoutCommand } from './commands/logout'
 import { newCommand } from './commands/new'
 import { runCommand } from './commands/run'
 import { uploadCommand } from './commands/upload'
@@ -61,7 +62,14 @@ program.command('list').description('List all tasks').action(listCommand)
 program
 	.command('login')
 	.description('Authenticate with Thyme Cloud')
-	.action(loginCommand)
+	.option('--browserless', 'Use pairing code instead of browser')
+	.option('--token', 'Manually paste an API token')
+	.action((options) => loginCommand(options))
+
+program
+	.command('logout')
+	.description('Log out of Thyme Cloud')
+	.action(logoutCommand)
 
 program
 	.command('upload')

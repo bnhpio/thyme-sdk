@@ -74,9 +74,7 @@ async function verifyAndDisplayUser(apiUrl: string, token: string) {
 	const parseResult = verifyResponseSchema.safeParse(rawData)
 	if (!parseResult.success) {
 		spinner.stop('Invalid API response')
-		error(
-			`API returned unexpected data format: ${parseResult.error.message}`,
-		)
+		error(`API returned unexpected data format: ${parseResult.error.message}`)
 		process.exit(1)
 	}
 
@@ -124,9 +122,7 @@ async function browserLogin(apiUrl: string) {
 	openBrowser(loginUrl)
 
 	clack.log.message('')
-	info(
-		`If the browser didn't open, visit:\n  ${pc.cyan(loginUrl)}`,
-	)
+	info(`If the browser didn't open, visit:\n  ${pc.cyan(loginUrl)}`)
 	clack.log.message('')
 
 	return pollForToken(apiUrl, sessionId, sessionSecret)
@@ -153,12 +149,8 @@ async function browserlessLogin(apiUrl: string) {
 	spinner.stop('Ready')
 
 	clack.log.message('')
-	clack.log.message(
-		`  Go to:     ${pc.cyan(verifyUrl)}`,
-	)
-	clack.log.message(
-		`  Enter code: ${pc.bold(pc.cyan(pairingCode))}`,
-	)
+	clack.log.message(`  Go to:     ${pc.cyan(verifyUrl)}`)
+	clack.log.message(`  Enter code: ${pc.bold(pc.cyan(pairingCode))}`)
 	clack.log.message('')
 
 	return pollForToken(apiUrl, sessionId, sessionSecret)
@@ -208,7 +200,7 @@ async function pollForToken(
 	process.exit(1)
 }
 
-async function tokenLogin(apiUrl: string) {
+async function tokenLogin(_apiUrl: string) {
 	info('To authenticate with Thyme Cloud:')
 	clack.log.message(
 		`  1. Visit ${pc.cyan('https://thyme.sh/dashboard/api-keys')}`,

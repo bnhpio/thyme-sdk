@@ -60,7 +60,8 @@ export function clearAuthToken(): void {
 	writeConfig(config)
 }
 
-const DEFAULT_API_URL = 'https://convex-backend-production-f25e.up.railway.app/http'
+const DEFAULT_API_URL =
+	'https://convex-backend-production-f25e.up.railway.app/http'
 
 export function getApiUrl(): string {
 	// 1. Global config

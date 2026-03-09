@@ -1,5 +1,18 @@
 # @thyme-labs/cli
 
+## 1.0.0
+
+### Major Changes
+
+- 3628a1d: yes
+- 56625b0: Updated
+
+### Patch Changes
+
+- Updated dependencies [3628a1d]
+- Updated dependencies [56625b0]
+  - @thyme-labs/sdk@1.0.0
+
 ## 0.3.2
 
 ### Patch Changes

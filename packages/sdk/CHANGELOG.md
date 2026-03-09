@@ -1,5 +1,12 @@
 # @thyme-labs/sdk
 
+## 1.0.0
+
+### Major Changes
+
+- 3628a1d: yes
+- 56625b0: Updated
+
 ## 0.3.2
 
 ### Patch Changes

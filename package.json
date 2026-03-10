@@ -3,7 +3,7 @@
 	"private": true,
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/thyme-labs/sdk.git"
+		"url": "git+https://github.com/thyme-labs/sdk.git"
 	},
 	"type": "module",
 	"workspaces": [
@@ -22,5 +22,6 @@
 		"@biomejs/biome": "2.4.6",
 		"@changesets/cli": "^2.29.8",
 		"typescript": "^5.9.3"
-	}
+	},
+	"version": ""
 }

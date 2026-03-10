@@ -31,6 +31,37 @@ interface LoginOptions {
 	token?: boolean
 }
 
+interface AuthStartBrowserResponse {
+	sessionId: string
+	sessionSecret: string
+	loginUrl: string
+}
+
+interface AuthStartBrowserlessResponse {
+	sessionId: string
+	sessionSecret: string
+	pairingCode: string
+	verifyUrl: string
+}
+
+interface AuthPollPendingResponse {
+	status: 'pending'
+}
+
+interface AuthPollCompleteResponse {
+	status: 'complete'
+	token: string
+}
+
+interface AuthPollExpiredResponse {
+	status: 'expired'
+}
+
+type AuthPollResponse =
+	| AuthPollPendingResponse
+	| AuthPollCompleteResponse
+	| AuthPollExpiredResponse
+
 function openBrowser(url: string): void {
 	const os = platform()
 	const cmd =
@@ -116,7 +147,8 @@ async function browserLogin(apiUrl: string) {
 		process.exit(1)
 	}
 
-	const { sessionId, sessionSecret, loginUrl } = await startResponse.json()
+	const { sessionId, sessionSecret, loginUrl } =
+		(await startResponse.json()) as AuthStartBrowserResponse
 	spinner.stop('Opening browser...')
 
 	openBrowser(loginUrl)
@@ -145,7 +177,7 @@ async function browserlessLogin(apiUrl: string) {
 	}
 
 	const { sessionId, sessionSecret, pairingCode, verifyUrl } =
-		await startResponse.json()
+		(await startResponse.json()) as AuthStartBrowserlessResponse
 	spinner.stop('Ready')
 
 	clack.log.message('')
@@ -181,7 +213,7 @@ async function pollForToken(
 			process.exit(1)
 		}
 
-		const data = await pollResponse.json()
+		const data = (await pollResponse.json()) as AuthPollResponse
 
 		if (data.status === 'complete') {
 			spinner.stop('Approved!')

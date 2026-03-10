@@ -161,8 +161,8 @@ export async function uploadCommand(
 			process.exit(1)
 		}
 	} else if (workspaces.length === 1) {
-		selectedWsId = workspaces[0].id
-		clack.log.info(`Using workspace: ${pc.cyan(workspaces[0].name)}`)
+		selectedWsId = workspaces?.[0]?.id
+		clack.log.info(`Using workspace: ${pc.cyan(workspaces?.[0]?.name)}`)
 	} else {
 		const selected = await clack.select({
 			message: 'Select a workspace:',
@@ -202,8 +202,8 @@ export async function uploadCommand(
 			process.exit(1)
 		}
 	} else if (projects.length === 1) {
-		selectedProjId = projects[0].id
-		clack.log.info(`Using project: ${pc.cyan(projects[0].name)}`)
+		selectedProjId = projects?.[0]?.id
+		clack.log.info(`Using project: ${pc.cyan(projects?.[0]?.name)}`)
 	} else {
 		const selected = await clack.select({
 			message: 'Select a project:',

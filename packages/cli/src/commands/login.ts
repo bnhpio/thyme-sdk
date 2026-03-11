@@ -251,9 +251,7 @@ async function pollForToken(
 
 async function tokenLogin(_apiUrl: string) {
 	info('To authenticate with Thyme Cloud:')
-	clack.log.message(
-		`  1. Visit portal`,
-	)
+	clack.log.message(`  1. Visit portal`)
 	clack.log.message('  2. Generate a new API token')
 	clack.log.message('  3. Copy the token and paste it below')
 	clack.log.message('')
@@ -306,7 +304,9 @@ export async function loginCommand(options: LoginOptions = {}) {
 		}
 		setApiUrl(options.apiUrl)
 		apiUrl = options.apiUrl
-		clack.log.step(`API URL updated in ~/.thyme/config.json: ${pc.cyan(apiUrl)}`)
+		clack.log.step(
+			`API URL updated in ~/.thyme/config.json: ${pc.cyan(apiUrl)}`,
+		)
 	} else if (!configuredApiUrl) {
 		setApiUrl(apiUrl)
 		clack.log.step(`API URL saved to ~/.thyme/config.json: ${pc.cyan(apiUrl)}`)
@@ -328,7 +328,9 @@ export async function loginCommand(options: LoginOptions = {}) {
 
 		apiUrl = nextApiUrl as string
 		setApiUrl(apiUrl)
-		clack.log.step(`API URL updated in ~/.thyme/config.json: ${pc.cyan(apiUrl)}`)
+		clack.log.step(
+			`API URL updated in ~/.thyme/config.json: ${pc.cyan(apiUrl)}`,
+		)
 	}
 
 	try {

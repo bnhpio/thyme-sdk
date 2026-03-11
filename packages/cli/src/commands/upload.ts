@@ -341,7 +341,7 @@ export async function uploadCommand(
 
 		outro(
 			`${pc.green('✓')} Task uploaded!\n\n` +
-			`Configure triggers in the dashboard`,
+				`Configure triggers in the dashboard`,
 		)
 	} catch (err) {
 		spinner.stop('Upload failed')

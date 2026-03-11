@@ -1,7 +1,13 @@
 import { exec } from 'node:child_process'
 import { platform } from 'node:os'
 import { z } from 'zod'
-import { getApiUrl, getAuthToken, setAuthToken } from '../utils/config'
+import {
+	getApiUrl,
+	getAuthToken,
+	readConfig,
+	setApiUrl,
+	setAuthToken,
+} from '../utils/config'
 import { loadEnv } from '../utils/env'
 import { clack, error, info, intro, outro, pc } from '../utils/ui'
 
@@ -29,6 +35,8 @@ const verifyResponseSchema = z.object({
 interface LoginOptions {
 	browserless?: boolean
 	token?: boolean
+	rewriteApiUrl?: boolean
+	apiUrl?: string
 }
 
 interface AuthStartBrowserResponse {
@@ -81,6 +89,15 @@ function resolveApiUrl(): string | undefined {
 	// Load .env from current project if available
 	loadEnv(process.cwd())
 	return getApiUrl()
+}
+
+function isValidApiUrl(value: string): boolean {
+	try {
+		const url = new URL(value)
+		return url.protocol === 'https:' || url.protocol === 'http:'
+	} catch {
+		return false
+	}
 }
 
 async function verifyAndDisplayUser(apiUrl: string, token: string) {
@@ -235,7 +252,7 @@ async function pollForToken(
 async function tokenLogin(_apiUrl: string) {
 	info('To authenticate with Thyme Cloud:')
 	clack.log.message(
-		`  1. Visit ${pc.cyan('https://thyme.sh/dashboard/api-keys')}`,
+		`  1. Visit portal`,
 	)
 	clack.log.message('  2. Generate a new API token')
 	clack.log.message('  3. Copy the token and paste it below')
@@ -272,12 +289,46 @@ export async function loginCommand(options: LoginOptions = {}) {
 		}
 	}
 
-	const apiUrl = resolveApiUrl()
+	let apiUrl = resolveApiUrl()
 	if (!apiUrl) {
 		error(
 			'THYME_API_URL is not set. Please set it to your Convex deployment URL (e.g., https://your-deployment.convex.cloud)',
 		)
 		process.exit(1)
+	}
+
+	// Persist API URL in global config and allow opt-in rewrite
+	const configuredApiUrl = readConfig().apiUrl
+	if (options.apiUrl) {
+		if (!isValidApiUrl(options.apiUrl)) {
+			error('Invalid API URL. Expected http(s)://...')
+			process.exit(1)
+		}
+		setApiUrl(options.apiUrl)
+		apiUrl = options.apiUrl
+		clack.log.step(`API URL updated in ~/.thyme/config.json: ${pc.cyan(apiUrl)}`)
+	} else if (!configuredApiUrl) {
+		setApiUrl(apiUrl)
+		clack.log.step(`API URL saved to ~/.thyme/config.json: ${pc.cyan(apiUrl)}`)
+	} else if (options.rewriteApiUrl) {
+		const nextApiUrl = await clack.text({
+			message: 'Enter Thyme API URL:',
+			placeholder: configuredApiUrl,
+			defaultValue: configuredApiUrl,
+			validate: (value) => {
+				if (!value) return 'API URL is required'
+				if (!isValidApiUrl(value)) return 'Expected a valid http(s) URL'
+			},
+		})
+
+		if (clack.isCancel(nextApiUrl)) {
+			clack.cancel('Operation cancelled')
+			process.exit(0)
+		}
+
+		apiUrl = nextApiUrl as string
+		setApiUrl(apiUrl)
+		clack.log.step(`API URL updated in ~/.thyme/config.json: ${pc.cyan(apiUrl)}`)
 	}
 
 	try {

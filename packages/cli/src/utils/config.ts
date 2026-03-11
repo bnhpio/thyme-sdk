@@ -8,6 +8,8 @@ interface Config {
 	apiUrl?: string
 }
 
+export type ApiUrlSource = 'config' | 'env' | 'default'
+
 export function getConfigDir(): string {
 	const dir = join(homedir(), '.thyme')
 	if (!existsSync(dir)) {
@@ -70,6 +72,23 @@ export function getApiUrl(): string {
 
 	// 2. Environment variable or .env file
 	return getEnv('THYME_API_URL') ?? DEFAULT_API_URL
+}
+
+export function getApiUrlInfo(): { url: string; source: ApiUrlSource } {
+	// 1. Global config
+	const config = readConfig()
+	if (config.apiUrl) {
+		return { url: config.apiUrl, source: 'config' }
+	}
+
+	// 2. Environment variable or .env file
+	const envApiUrl = getEnv('THYME_API_URL')
+	if (envApiUrl) {
+		return { url: envApiUrl, source: 'env' }
+	}
+
+	// 3. Fallback default
+	return { url: DEFAULT_API_URL, source: 'default' }
 }
 
 export function setApiUrl(url: string): void {

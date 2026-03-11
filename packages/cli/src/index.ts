@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { Command } from 'commander'
+import { apiUrlCommand } from './commands/api-url'
 import { initCommand } from './commands/init'
 import { listCommand } from './commands/list'
 import { loginCommand } from './commands/login'
@@ -64,6 +65,8 @@ program
 	.description('Authenticate with Thyme Cloud')
 	.option('--browserless', 'Use pairing code instead of browser')
 	.option('--token', 'Manually paste an API token')
+	.option('--rewrite-api-url', 'Prompt and rewrite saved API URL')
+	.option('--api-url <url>', 'Set and use API URL for this login')
 	.action((options) => loginCommand(options))
 
 program
@@ -80,5 +83,10 @@ program
 	.action((task, options) =>
 		uploadCommand(task, options.workspace, options.project),
 	)
+
+program
+	.command('api-url')
+	.description('Show current Thyme API URL')
+	.action(apiUrlCommand)
 
 program.parse()

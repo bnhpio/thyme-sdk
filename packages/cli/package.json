@@ -12,11 +12,13 @@
 		"thyme": "./dist/index.js"
 	},
 	"files": [
-		"dist"
+		"dist",
+		"scripts/postinstall.js"
 	],
 	"scripts": {
 		"build": "tsup",
 		"dev": "tsup --watch",
+		"postinstall": "node ./scripts/postinstall.js",
 		"test": "echo \"No tests yet\""
 	},
 	"keywords": [

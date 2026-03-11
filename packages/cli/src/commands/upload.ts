@@ -201,15 +201,19 @@ export async function uploadCommand(
 			)
 			process.exit(1)
 		}
-	} else if (projects.length === 1) {
-		selectedProjId = projects?.[0]?.id
-		clack.log.info(`Using project: ${pc.cyan(projects?.[0]?.name)}`)
 	} else {
+		clack.log.message('')
+		clack.log.info(`Available projects in ${pc.cyan(selectedWs.name)}:`)
+		for (const p of projects) {
+			clack.log.message(`  • ${p.name} ${pc.dim(`(${p.id})`)}`)
+		}
+		clack.log.message('')
+
 		const selected = await clack.select({
 			message: 'Select a project:',
 			options: projects.map((p) => ({
 				value: p.id,
-				label: p.name,
+				label: `${p.name} ${pc.dim(`(${p.id})`)}`,
 			})),
 		})
 

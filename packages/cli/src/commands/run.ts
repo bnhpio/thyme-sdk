@@ -121,7 +121,7 @@ export async function runCommand(taskName?: string, options: RunOptions = {}) {
 	spinner.start('Executing task in Deno sandbox...')
 
 	// Run task
-	const result = await runInDeno(taskPath, args, config)
+	const result = await runInDeno(taskPath, args, config, projectRoot)
 
 	if (!result.success) {
 		spinner.stop('Task execution failed')

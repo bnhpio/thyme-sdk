@@ -72,14 +72,20 @@ function sanitizeErrorMessage(error: string): string {
 /**
  * Run a task in Deno sandbox - similar to Gelato's w3f test and @deno/sandbox
  * Creates an isolated Deno process with controlled permissions
+ *
+ * Deno 2 defaults `nodeModulesDir` to "manual" when a package.json exists; we pass
+ * `--node-modules-dir=auto` and allow read on the Thyme project root so tasks can
+ * resolve `viem` / `@thyme-labs/sdk` from the repo `node_modules`.
  */
 export async function runInDeno(
 	taskPath: string,
 	args: unknown,
 	config: TaskConfig,
+	projectRoot: string,
 ): Promise<RunResult> {
 	const taskDir = dirname(resolve(taskPath))
 	const absoluteTaskPath = resolve(taskPath)
+	const absoluteProjectRoot = resolve(projectRoot)
 
 	// Escape path for safe JavaScript string interpolation
 	const safeTaskPath = escapeJsString(absoluteTaskPath)
@@ -136,8 +142,12 @@ export async function runInDeno(
 	// Add import map to redirect bare Node.js imports to node: prefix
 	denoFlags.push(`--import-map=${importMapDataUrl}`)
 
-	// Sandbox permissions - minimal by default, similar to @deno/sandbox
-	denoFlags.push(`--allow-read=${taskDir}`) // Only allow reading task directory
+	// Deno 2: restore npm auto behavior (vs default "manual" with package.json)
+	denoFlags.push('--node-modules-dir=auto')
+
+	// Read task sources + repo root (node_modules, package.json live here; cwd is taskDir)
+	denoFlags.push(`--allow-read=${taskDir}`)
+	denoFlags.push(`--allow-read=${absoluteProjectRoot}`)
 
 	// Add memory limit if specified
 	if (config.memory) {

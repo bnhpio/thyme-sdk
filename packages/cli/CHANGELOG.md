@@ -1,5 +1,11 @@
 # @thyme-labs/cli
 
+## 0.3.6
+
+### Patch Changes
+
+- **`thyme run` on Deno 2:** pass `--node-modules-dir=auto` (Deno 2 defaults `nodeModulesDir` to `"manual"` when `package.json` exists) and extend `--allow-read` to the Thyme project root so tasks can resolve `viem` and `@thyme-labs/sdk` from repo `node_modules` while `cwd` remains the task directory.
+
 ## 0.3.2
 
 ### Patch Changes

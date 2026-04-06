@@ -4,12 +4,12 @@
 	"description": "CLI for developing and deploying Thyme tasks",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/thyme-labs/sdk.git",
+		"url": "git+https://github.com/thyme-labs/sdk.git",
 		"directory": "packages/cli"
 	},
 	"type": "module",
 	"bin": {
-		"thyme": "./dist/index.js"
+		"thyme": "dist/index.js"
 	},
 	"files": [
 		"dist",

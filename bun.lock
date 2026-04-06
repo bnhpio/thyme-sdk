@@ -12,9 +12,9 @@
     },
     "packages/cli": {
       "name": "@thyme-labs/cli",
-      "version": "0.3.2",
+      "version": "0.3.7",
       "bin": {
-        "thyme": "./dist/index.js",
+        "thyme": "dist/index.js",
       },
       "dependencies": {
         "@clack/prompts": "^0.8.2",

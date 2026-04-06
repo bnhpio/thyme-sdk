@@ -1,5 +1,11 @@
 # @thyme-labs/cli
 
+## 0.3.7
+
+### Patch Changes
+
+- 56621ee: fix deno
+
 ## 0.3.6
 
 ### Patch Changes
